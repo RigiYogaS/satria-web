@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error: any) {
-    if (error.code === "P2002") {
+    if (error.code === "P2002") { 
       return NextResponse.json(
         { error: "Email sudah terdaftar" },
         { status: 400 }

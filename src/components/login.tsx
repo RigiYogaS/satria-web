@@ -55,7 +55,7 @@ const Login = () => {
             asChild
             className="bg-navy-200 hover:bg-navy-400"
             >
-            <Link href={"https://google.com"}>Login</Link>
+            <Link href="/dashboard">Login</Link>
           </Button>
           <p className="text-center">Tidak memiliki akun? <Link href={"/auth/regis"} className="text-navy-400">Daftar</Link></p>
         </div>

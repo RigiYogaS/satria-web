@@ -43,7 +43,6 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-
   --color-navy-0: #D7E4F5;
   --color-navy-50: #C5D5EA;
   --color-navy-100: #B3C6DE;
@@ -151,4 +150,47 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Animasi untuk dropdown collapsible */
+@keyframes collapsible-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes collapsible-up {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+.animate-collapsible-down {
+  animation: collapsible-down 0.2s ease-out;
+}
+
+.animate-collapsible-up {
+  animation: collapsible-up 0.2s ease-out;
+}
+
+/* Force consistent icon sizes in sidebar */
+[data-sidebar="menu-button"] svg {
+  width: 20px !important;
+  height: 20px !important;
+  stroke-width: 1.5 !important;
+}
+
+/* Center icons when sidebar is collapsed */
+[data-collapsible="icon"] [data-sidebar="menu-button"] {
+  justify-content: center !important;
 }
