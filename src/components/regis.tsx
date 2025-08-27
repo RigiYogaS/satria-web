@@ -1,0 +1,248 @@
+"use client";
+
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
+
+const Regis = () => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    nama: "",
+    email: "",
+    jabatan: "",
+    bagian: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const togglePassword = () => setShowPassword((prev) => !prev);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleSelectChange = (value: string) => {
+    setFormData({
+      ...formData,
+      bagian: value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage("Registrasi berhasil! Silakan login.");
+        setFormData({
+          nama: "",
+          email: "",
+          jabatan: "",
+          bagian: "",
+          password: "",
+        });
+      } else {
+        setMessage(data.error || "Terjadi kesalahan");
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      setMessage("Terjadi kesalahan koneksi");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="w-full h-screen bg-transparent flex justify-center items-center font-montserrat">
+      {/* LEFT SIDE */}
+      <div className="w-1/2 bg-white h-screen flex flex-col items-center justify-center gap-5">
+        <div className="flex flex-col gap-5 w-2/3">
+          {/* HEADER */}
+          <div className="flex flex-col text-center gap-1">
+            <h1 className="text-3xl font-semibold">Daftar</h1>
+            <p>Silakan isi detail Anda untuk membuat akun</p>
+          </div>
+
+          {/* FORM */}
+          <form
+            onSubmit={handleSubmit}
+            className="w-full flex flex-col gap-2 justify-center items-center"
+          >
+            {message && (
+              <div
+                className={`p-3 rounded-md text-sm ${
+                  message.includes("berhasil")
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {message}
+              </div>
+            )}
+
+            {/* NAMA */}
+            <div className="grid w-full max-w-sm items-center gap-2">
+              <Label htmlFor="nama">Nama</Label>
+              <Input
+                type="text"
+                id="nama"
+                placeholder="Masukkan Nama"
+                value={formData.nama}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            {/* EMAIL */}
+            <div className="grid w-full max-w-sm items-center gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                type="email"
+                id="email"
+                placeholder="Masukkan Email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            {/* JABATAN */}
+            <div className="grid w-full max-w-sm items-center gap-2">
+              <Label htmlFor="jabatan">Jabatan</Label>
+              <Input
+                type="text"
+                id="jabatan"
+                placeholder="Masukkan Jabatan"
+                value={formData.jabatan}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            {/* BAGIAN */}
+            <div className="relative flex flex-col w-full max-w-sm gap-2">
+              <Label htmlFor="bagian">Bagian</Label>
+              <Select
+                onValueChange={handleSelectChange}
+                value={formData.bagian}
+                required
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih Bagian" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Bagprotokol">Bagprotokol</SelectItem>
+                  <SelectItem value="Bagkominter">Bagkominter</SelectItem>
+                  <SelectItem value="Bagrenmin">Bagrenmin</SelectItem>
+                  <SelectItem value="Taud">Taud</SelectItem>
+                  <SelectItem value="Bagjatanrin">Bagjatanrin</SelectItem>
+                  <SelectItem value="Bagbatanas">Bagbatanas</SelectItem>
+                  <SelectItem value="SPRI Kadiv">SPRI Kadiv</SelectItem>
+                  <SelectItem value="SPRI SES">SPRI SES</SelectItem>
+                  <SelectItem value="Bagdamkeman">Bagdamkeman</SelectItem>
+                  <SelectItem value="Bagkembangtas">Bagkembangtas</SelectItem>
+                  <SelectItem value="BagKonverin">BagKonverin</SelectItem>
+                  <SelectItem value="BagPI">BagPI</SelectItem>
+                  <SelectItem value="SPRI KAROMISI">SPRI KAROMISI</SelectItem>
+                  <SelectItem value="SPRI KAROKONVERIN">
+                    SPRI KAROKONVERIN
+                  </SelectItem>
+                  <SelectItem value="Bagwakinter">Bagwakinter</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* KATA SANDI */}
+            <div className="grid w-full max-w-sm gap-2">
+              <Label htmlFor="password">Kata Sandi</Label>
+              <div className="relative w-full flex justify-center">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  placeholder="Masukkan Kata Sandi"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={togglePassword}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
+                  aria-label={
+                    showPassword ? "Sembunyikan password" : "Tampilkan password"
+                  }
+                >
+                  {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                </button>
+              </div>
+              <Button
+                type="submit"
+                className="bg-navy-200 hover:bg-navy-400 w-full mt-6"
+                disabled={loading}
+              >
+                {loading ? "Mendaftar..." : "Daftar"}
+              </Button>
+              <p className="text-center">
+                Sudah memiliki akun?{" "}
+                <Link href="/auth/login" className="text-navy-400">
+                  Masuk
+                </Link>
+              </p>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* RIGHT SIDE */}
+      <div className="relative w-1/2 bg-neutral-100 h-screen flex items-center justify-center">
+        <Image
+          src="/img/continent.png"
+          alt="continent"
+          width={1000}
+          height={1000}
+          className="w-full h-auto"
+        />
+        <div className="absolute  flex flex-col justify-center items-center gap-4">
+          <Image
+            src="/logo/divhub.png"
+            alt="continent"
+            width={500}
+            height={500}
+            className="w-[40%] h-auto"
+          />
+          <div className="flex flex-col justify-center items-center">
+            <h1 className="text-5xl font-bold text-navy-600">SATRIA</h1>
+            <p className="w-full text-center font-medium">
+              Sistem Absensi Tepat, Responsif, Interaktif dan Akurat
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Regis;

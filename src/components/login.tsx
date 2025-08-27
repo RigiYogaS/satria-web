@@ -8,68 +8,26 @@ import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
-const Regis = () => {
+const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const togglePassword = () => setShowPassword((prev) => !prev);
-
   return (
     <section className="w-full h-screen bg-transparent flex justify-center items-center font-montserrat">
       {/* LEFT SIDE */}
       <div className="w-1/2 bg-white h-screen flex flex-col items-center justify-center gap-5">
-        <div className="flex flex-col gap-5 w-2/3">
+        <div className="flex flex-col gap-5">
           {/* HEADER */}
           <div className="flex flex-col text-center gap-1">
-            <h1 className="text-3xl font-semibold">Daftar</h1>
-            <p>Silakan isi detail Anda untuk membuat akun</p>
+            <h1 className="text-3xl font-semibold">Masuk</h1>
+            <p>Selamat datang, silakan login untuk melanjutkan</p>
           </div>
 
           {/* FORM */}
           <div className="w-full flex flex-col gap-2 justify-center items-center">
-            {/* NAMA */}
-            <div className="grid w-full max-w-sm items-center gap-2">
-              <Label htmlFor="nama">Nama</Label>
-              <Input type="text" id="nama" placeholder="Masukkan Nama" />
-              {/* penutup div grid form */}
-            </div>
             {/* EMAIL */}
             <div className="grid w-full max-w-sm items-center gap-2">
               <Label htmlFor="email">Email</Label>
               <Input type="email" id="email" placeholder="Masukkan Email" />
-            </div>
-            {/* JABATAN */}
-            <div className="grid w-full max-w-sm items-center gap-2">
-              <Label htmlFor="jabatan">Jabatan</Label>
-              <Input type="text" id="jabatan" placeholder="Masukkan Jabatan" />
-            </div>
-            {/* BAGIAN */}
-            <div className="relative flex flex-col w-full max-w-sm gap-2">
-              <Label htmlFor="bagian">Bagian</Label>
-              <select
-                name="bagian"
-                id="bagian"
-                className="border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm pr-10"
-                
-              >
-                <option value="" disabled>
-                  Pilih Bagian
-                </option>
-                <option value="Bagprotokol">Bagprotokol</option>
-                <option value="Bagkominter">Bagkominter</option>
-                <option value="Bagrenmin">Bagrenmin</option>
-                <option value="Taud">Taud</option>
-                <option value="Bagjatanrin">Bagjatanrin</option>
-                <option value="Bagbatanas">Bagbatanas</option>
-                <option value="SPRI Kadiv">SPRI Kadiv</option>
-                <option value="SPRI SES">SPRI SES</option>
-                <option value="Bagdamkeman">Bagdamkeman</option>
-                <option value="Bagkembangtas">Bagkembangtas</option>
-                <option value="BagKonverin">BagKonverin</option>
-                <option value="BagPI">BagPI</option>
-                <option value="SPRI KAROMISI">SPRI KAROMISI</option>
-                <option value="SPRI KAROKONVERIN">SPRI KAROKONVERIN</option>
-                <option value="Bagwakinter">Bagwakinter</option>
-              </select>
-              
             </div>
             {/* KATA SANDI */}
             <div className="grid w-full max-w-sm gap-2">
@@ -91,18 +49,15 @@ const Regis = () => {
                   {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                 </button>
               </div>
-              <Button
-                asChild
-                className="bg-navy-200 hover:bg-navy-400 w-full mt-6"
-              >
-                <Link href={"https://google.com"}>Daftar</Link>
-              </Button>
-              <p className="text-center">
-                Sudah memiliki akun?{" "}
-                <span className="text-navy-400">Masuk</span>
-              </p>
             </div>
           </div>
+          <Button 
+            asChild
+            className="bg-navy-200 hover:bg-navy-400"
+            >
+            <Link href={"https://google.com"}>Login</Link>
+          </Button>
+          <p className="text-center">Tidak memiliki akun? <Link href={"/auth/regis"} className="text-navy-400">Daftar</Link></p>
         </div>
       </div>
 
@@ -135,4 +90,4 @@ const Regis = () => {
   );
 };
 
-export default Regis;
+export default Login;
