@@ -55,7 +55,9 @@ export async function sendOTPEmail(
         </head>
         <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #214D83 0%, #B3C6DE 100%); padding: 30px; border-radius: 10px; text-align: center; color: white;">
-            <img src="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/logo/divhub.png" alt="DivHub Logo" style="max-width: 80px; height: auto; margin-bottom: 15px;">
+            <img src="${
+              process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+            }/logo/divhub.png" alt="DivHub Logo" style="max-width: 80px; height: auto; margin-bottom: 15px;">
             <h1 style="margin: 0; font-size: 28px;">SATRIA</h1>
             <p style="margin: 5px 0 0; opacity: 0.9;">Sistem Absensi Tepat, Responsif, Interaktif dan Akurat</p>
           </div>
@@ -129,7 +131,9 @@ export async function sendWelcomeEmail(
         </head>
         <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); padding: 30px; border-radius: 10px; text-align: center; color: white;">
-            <img src="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/logo/divhub.png" alt="DivHub Logo" style="max-width: 80px; height: auto; margin-bottom: 15px;">
+            <img src="${
+              process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+            }/logo/divhub.png" alt="DivHub Logo" style="max-width: 80px; height: auto; margin-bottom: 15px;">
             <h1 style="margin: 0; font-size: 28px;">🎉 Selamat Datang!</h1>
             <p style="margin: 10px 0 0; opacity: 0.9;">Akun Anda telah berhasil diverifikasi</p>
           </div>
