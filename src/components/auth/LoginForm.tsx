@@ -8,14 +8,48 @@ import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
-const Login = () => {
+const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
   const togglePassword = () => setShowPassword((prev) => !prev);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+
+    try {
+      // TODO: Implement login API call
+      console.log("Login attempt:", formData);
+
+      // Temporary redirect untuk testing
+      window.location.href = "/dashboardUser";
+    } catch (error) {
+      console.error("Login error:", error);
+      setMessage("Terjadi kesalahan saat login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="w-full h-screen bg-transparent flex justify-center items-center font-montserrat">
       {/* LEFT SIDE */}
       <div className="w-1/2 bg-white h-screen flex flex-col items-center justify-center gap-5">
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-5 w-2/3">
           {/* HEADER */}
           <div className="flex flex-col text-center gap-1">
             <h1 className="text-3xl font-semibold">Masuk</h1>
@@ -23,12 +57,29 @@ const Login = () => {
           </div>
 
           {/* FORM */}
-          <div className="w-full flex flex-col gap-2 justify-center items-center">
+          <form
+            onSubmit={handleSubmit}
+            className="w-full flex flex-col gap-2 justify-center items-center"
+          >
+            {message && (
+              <div className="p-3 rounded-md text-sm bg-red-100 text-red-700 w-full max-w-sm text-center">
+                {message}
+              </div>
+            )}
+
             {/* EMAIL */}
             <div className="grid w-full max-w-sm items-center gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input type="email" id="email" placeholder="Masukkan Email" />
+              <Input
+                type="email"
+                id="email"
+                placeholder="Masukkan Email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
             </div>
+
             {/* KATA SANDI */}
             <div className="grid w-full max-w-sm gap-2">
               <Label htmlFor="password">Kata Sandi</Label>
@@ -37,6 +88,9 @@ const Login = () => {
                   type={showPassword ? "text" : "password"}
                   id="password"
                   placeholder="Masukkan Kata Sandi"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
                 />
                 <button
                   type="button"
@@ -50,14 +104,25 @@ const Login = () => {
                 </button>
               </div>
             </div>
-          </div>
-          <Button 
-            asChild
-            className="bg-navy-200 hover:bg-navy-400"
+
+            <Button
+              type="submit"
+              className="bg-navy-200 hover:bg-navy-400 w-full max-w-sm mt-4"
+              disabled={loading}
             >
-            <Link href="/dashboard">Login</Link>
-          </Button>
-          <p className="text-center">Tidak memiliki akun? <Link href={"/auth/regis"} className="text-navy-400">Daftar</Link></p>
+              {loading ? "Masuk..." : "Login"}
+            </Button>
+
+            <p className="text-center">
+              Tidak memiliki akun?{" "}
+              <Link
+                href="/auth/regis"
+                className="text-navy-400 hover:underline"
+              >
+                Daftar
+              </Link>
+            </p>
+          </form>
         </div>
       </div>
 
@@ -70,10 +135,10 @@ const Login = () => {
           height={1000}
           className="w-full h-auto"
         />
-        <div className="absolute  flex flex-col justify-center items-center gap-4">
+        <div className="absolute flex flex-col justify-center items-center gap-4">
           <Image
             src="/logo/divhub.png"
-            alt="continent"
+            alt="logo"
             width={500}
             height={500}
             className="w-[40%] h-auto"
@@ -90,4 +155,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default LoginForm;

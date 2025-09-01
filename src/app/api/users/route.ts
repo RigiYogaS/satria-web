@@ -1,6 +1,40 @@
 import { NextResponse } from "next/server";
 import { getUsers, createUser } from "@/services/user";
 import bcrypt from "bcryptjs";
+import { generateOTP, sendOTPEmail } from "@/lib/email";
+
+// Fungsi validasi password
+function validatePassword(password: string): {
+  isValid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+
+  if (password.length < 8) {
+    errors.push("minimal 8 karakter");
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    errors.push("minimal 1 huruf besar");
+  }
+
+  if (!/[a-z]/.test(password)) {
+    errors.push("minimal 1 huruf kecil");
+  }
+
+  if (!/[0-9]/.test(password)) {
+    errors.push("minimal 1 angka");
+  }
+
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    errors.push("minimal 1 karakter khusus");
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
+}
 
 export async function GET() {
   const users = await getUsers();
@@ -8,14 +42,54 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  let divisi_id_submitted: any = null;
+
   try {
     const body = await request.json();
-    const { email, nama, jabatan, bagian, password } = body;
+    const { email, nama, jabatan, divisi_id, password, role } = body;
+    divisi_id_submitted = divisi_id; // Store for error handling
 
     // Validasi input
-    if (!email || !nama || !jabatan || !bagian || !password) {
+    if (!email || !nama || !jabatan || !divisi_id || !password) {
       return NextResponse.json(
         { error: "Semua field harus diisi" },
+        { status: 400 }
+      );
+    }
+
+    // Validasi email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: "Format email tidak valid" },
+        { status: 400 }
+      );
+    }
+
+    // Validasi password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return NextResponse.json(
+        {
+          error: `Password tidak valid: ${passwordValidation.errors.join(
+            ", "
+          )}`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validasi nama dan jabatan
+    if (nama.trim().length < 2) {
+      return NextResponse.json(
+        { error: "Nama minimal 2 karakter" },
+        { status: 400 }
+      );
+    }
+
+    if (jabatan.trim().length < 2) {
+      return NextResponse.json(
+        { error: "Jabatan minimal 2 karakter" },
         { status: 400 }
       );
     }
@@ -23,32 +97,80 @@ export async function POST(request: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Buat user baru
+    // Generate OTP
+    const otp = generateOTP();
+    const otpExpires = new Date();
+    otpExpires.setMinutes(
+      otpExpires.getMinutes() + parseInt(process.env.OTP_EXPIRY_MINUTES || "15")
+    );
+
+    // Buat user baru dengan status pending
     const user = await createUser({
-      email,
-      nama,
-      jabatan,
-      bagian,
+      email: email.toLowerCase().trim(),
+      nama: nama.trim(),
+      jabatan: jabatan.trim(),
+      divisi_id: parseInt(divisi_id),
       password: hashedPassword,
+      role: role || "pegawai",
+      status: "PENDING", // UPPERCASE to match database
+      otp_code: otp,
+      otp_expires_at: otpExpires,
     });
 
-    // Return user tanpa password
-    const { password: _, ...userWithoutPassword } = user;
-    
+    // Kirim email OTP
+    console.log(`📧 Attempting to send OTP email to ${email}...`);
+    const emailSent = await sendOTPEmail(email, nama, otp);
+
+    if (!emailSent) {
+      // Jika gagal kirim email, tetap return success tapi dengan pesan
+      console.warn(`❌ Failed to send OTP email to ${email}`);
+      console.warn(
+        `📝 User created successfully, but email notification failed`
+      );
+    } else {
+      console.log(`✅ OTP email sent successfully to ${email}`);
+    }
+
+    // Return user tanpa password dan OTP
+    const {
+      password: _,
+      otp_code: __,
+      otp_expires: ___,
+      ...userWithoutSensitiveData
+    } = user as any;
+
     return NextResponse.json(
-      { message: "User berhasil dibuat", user: userWithoutPassword },
+      {
+        message:
+          "Registrasi berhasil! Silakan cek email Anda untuk verifikasi OTP.",
+        user: userWithoutSensitiveData,
+        emailSent: emailSent,
+      },
       { status: 201 }
     );
   } catch (error: any) {
-    if (error.code === "P2002") { 
+    console.error("Error creating user:", error);
+
+    // Handle foreign key constraint error
+    if (error.code === "P2003" && error.meta?.field_name === "divisi_id") {
+      return NextResponse.json(
+        {
+          error: "Divisi tidak valid. Silakan pilih divisi yang tersedia.",
+          details: `Divisi dengan ID ${divisi_id_submitted} tidak ditemukan.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (error.code === "P2002") {
       return NextResponse.json(
         { error: "Email sudah terdaftar" },
         { status: 400 }
       );
     }
-    
+
     return NextResponse.json(
-      { error: "Terjadi kesalahan server" },
+      { error: "Terjadi kesalahan server: " + error.message },
       { status: 500 }
     );
   }

@@ -1,9 +1,16 @@
 import { prisma } from "@/lib/prisma";
 
 export async function getUsers() {
-  return await prisma.user.findMany({
-    include: {
-      pegawai: true,
+  return await prisma.users.findMany({
+    select: {
+      id_user: true,
+      nama: true,
+      email: true,
+      jabatan: true,
+      divisi: true,
+      role: true,
+      created_at: true,
+      updated_at: true,
     },
   });
 }
@@ -12,63 +19,44 @@ export async function createUser(data: {
   email: string;
   nama: string;
   jabatan: string;
-  bagian: string;
+  divisi_id: number;
   password: string;
+  role?: string; // Change to string
+  status?: string; // Change to string
+  otp_code?: string;
+  otp_expires_at?: Date; // Fix field name
 }) {
-  // Map string bagian to enum value
-  const bagianMap: Record<string, string> = {
-    Bagprotokol: "Bagprotokol",
-    Bagkominter: "Bagkominter",
-    Bagrenmin: "Bagrenmin",
-    Taud: "Taud",
-    Bagjatanrin: "Bagjatanrin",
-    Bagbatanas: "Bagbatanas",
-    "SPRI Kadiv": "SPRI_Kadiv",
-    "SPRI SES": "SPRI_SES",
-    Bagdamkeman: "Bagdamkeman",
-    Bagkembangtas: "Bagkembantas",
-    BagKonverin: "Bagkonverin",
-    BagPI: "Bagpi",
-    "SPRI KAROMISI": "SPRI_Karomisi",
-    "SPRI KAROKONVERIN": "SPRI_Karokonverin",
-    Bagwakinter: "Bagwakinter",
-  };
-
-  const bagianEnum = bagianMap[data.bagian] || data.bagian;
-
-  // Create pegawai first, then user
-  const result = await prisma.$transaction(async (tx: any) => {
-    // Create pegawai
-    const pegawai = await tx.pegawai.create({
-      data: {
-        nama: data.nama,
-        jabatan: data.jabatan,
-        divisi: bagianEnum,
-      },
-    });
-
-    // Create user linked to pegawai
-    const user = await tx.user.create({
-      data: {
-        email: data.email,
-        password: data.password,
-        role: "pegawai",
-        pegawaiId: pegawai.id,
-      },
-      include: {
-        pegawai: true,
-      },
-    });
-
-    return user;
+  return await prisma.users.create({
+    data: {
+      email: data.email,
+      nama: data.nama,
+      jabatan: data.jabatan,
+      divisi_id: data.divisi_id,
+      password: data.password,
+      role: data.role || "pegawai",
+      status: data.status || "PENDING",
+      otp_code: data.otp_code,
+      otp_expires_at: data.otp_expires_at, // Fix field name
+    } as any,
+    include: {
+      divisi: true,
+    },
   });
-
-  return result;
 }
 
 export async function getUserByEmail(email: string) {
-  return await prisma.user.findUnique({
+  return await prisma.users.findUnique({
     where: { email },
-    include: { pegawai: true },
+    select: {
+      id_user: true,
+      nama: true,
+      email: true,
+      jabatan: true,
+      divisi: true,
+      role: true,
+      password: true,
+      created_at: true,
+      updated_at: true,
+    },
   });
 }
