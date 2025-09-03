@@ -181,3 +181,80 @@ export async function sendWelcomeEmail(
     return false;
   }
 }
+
+// Fungsi untuk kirim email reset password
+export async function sendPasswordResetEmail(
+  email: string,
+  nama: string,
+  resetToken: string
+): Promise<boolean> {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || "587"),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"${process.env.FROM_NAME}" <${process.env.FROM_EMAIL}>`,
+      to: email,
+      subject: "Reset Password - Sistem SATRIA",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center; color: white;">
+            <img src="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/logo/divhub.png" alt="DivHub Logo" style="max-width: 80px; height: auto; margin-bottom: 15px;">
+            <h1 style="margin: 0; font-size: 28px;">SATRIA</h1>
+            <p style="margin: 5px 0 0; opacity: 0.9;">Sistem Absensi Tepat, Responsif, Interaktif dan Akurat</p>
+          </div>
+          
+          <div style="padding: 30px 20px;">
+            <h2 style="color: #333; margin-bottom: 20px;">Halo ${nama}!</h2>
+            
+            <p style="color: #666; line-height: 1.6; margin-bottom: 25px;">
+              Kami menerima permintaan untuk reset password akun Anda. Gunakan kode berikut untuk membuat password baru:
+            </p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; margin: 25px 0; border: 2px dashed #667eea;">
+              <h1 style="color: #667eea; font-size: 32px; letter-spacing: 5px; margin: 0; font-family: 'Courier New', monospace;">
+                ${resetToken}
+              </h1>
+              <p style="margin: 10px 0 0; color: #888; font-size: 14px;">Kode Reset Password</p>
+            </div>
+            
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
+              <p style="margin: 0; color: #856404; font-size: 14px;">
+                <strong>⏰ Penting:</strong> Kode ini berlaku selama <strong>15 menit</strong> sejak email ini dikirim.
+              </p>
+            </div>
+            
+            <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;">
+              <p style="margin: 0; color: #721c24; font-size: 14px;">
+                <strong>🔒 Keamanan:</strong> Jika Anda tidak meminta reset password, abaikan email ini. Password Anda tetap aman.
+              </p>
+            </div>
+            
+            <p style="color: #666; font-size: 14px; margin-top: 30px;">
+              Jika Anda mengalami masalah, jangan ragu untuk menghubungi tim support kami.
+            </p>
+          </div>
+          
+          <div style="text-align: center; padding: 20px; color: #888; font-size: 12px; border-top: 1px solid #eee;">
+            <p style="margin: 0;">© 2025 Sistem SATRIA. Semua hak dilindungi.</p>
+            <p style="margin: 5px 0 0;">Email ini dikirim secara otomatis, mohon jangan membalas.</p>
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Reset password email sent to: ${email}`);
+    return true;
+  } catch (error) {
+    console.error("Error sending reset password email:", error);
+    return false;
+  }
+}

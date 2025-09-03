@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -16,14 +17,51 @@ const LoginForm = () => {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const router = useRouter();
 
   const togglePassword = () => setShowPassword((prev) => !prev);
 
+  // Validasi password (sama seperti register)
+  const validatePassword = (password: string): string[] => {
+    const errors: string[] = [];
+
+    if (password.length < 8) {
+      errors.push("Password minimal 8 karakter");
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      errors.push("Harus ada minimal 1 huruf besar");
+    }
+
+    if (!/[a-z]/.test(password)) {
+      errors.push("Harus ada minimal 1 huruf kecil");
+    }
+
+    if (!/[0-9]/.test(password)) {
+      errors.push("Harus ada minimal 1 angka");
+    }
+
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      errors.push("Harus ada minimal 1 karakter khusus (!@#$%^&*)");
+    }
+
+    return errors;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+
     setFormData({
       ...formData,
-      [e.target.id]: e.target.value,
+      [id]: value,
     });
+
+    // Validasi password real-time
+    if (id === "password") {
+      const errors = validatePassword(value);
+      setPasswordErrors(errors);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,14 +70,85 @@ const LoginForm = () => {
     setMessage("");
 
     try {
-      // TODO: Implement login API call
-      console.log("Login attempt:", formData);
+      // Validasi password format sebelum submit
+      const passwordValidationErrors = validatePassword(formData.password);
+      if (passwordValidationErrors.length > 0) {
+        setMessage("Password tidak memenuhi format yang benar");
+        setPasswordErrors(passwordValidationErrors);
+        return;
+      }
 
-      // Temporary redirect untuk testing
-      window.location.href = "/dashboardUser";
+      // Validasi email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setMessage("Format email tidak valid");
+        return;
+      }
+
+      // Validasi field kosong
+      if (!formData.email.trim() || !formData.password.trim()) {
+        setMessage("Email dan password harus diisi");
+        return;
+      }
+
+      console.log("Login attempt:", { ...formData, password: "[HIDDEN]" });
+
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email.toLowerCase().trim(),
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage("Login berhasil! Mengalihkan ke dashboard...");
+
+        // Store user data di localStorage atau session
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+
+        // Reset form
+        setFormData({
+          email: "",
+          password: "",
+        });
+        setPasswordErrors([]);
+
+        // Redirect ke dashboard berdasarkan role
+        setTimeout(() => {
+          if (data.user.role === "admin") {
+            router.push("/dashboardAdmin");
+          } else {
+            router.push("/dashboardUser");
+          }
+        }, 2000);
+      } else {
+        // Handle berbagai jenis error
+        if (data.needVerification) {
+          setMessage(`${data.error} Mengalihkan ke halaman verifikasi...`);
+          setTimeout(() => {
+            router.push(
+              `/auth/verify-otp?email=${encodeURIComponent(data.email)}`
+            );
+          }, 3000);
+        } else {
+          setMessage(data.error || "Login gagal");
+        }
+
+        if (data.details) {
+          console.error("Error details:", data.details);
+        }
+      }
     } catch (error) {
       console.error("Login error:", error);
-      setMessage("Terjadi kesalahan saat login");
+      setMessage("Terjadi kesalahan koneksi");
     } finally {
       setLoading(false);
     }
@@ -62,7 +171,15 @@ const LoginForm = () => {
             className="w-full flex flex-col gap-2 justify-center items-center"
           >
             {message && (
-              <div className="p-3 rounded-md text-sm bg-red-100 text-red-700 w-full max-w-sm text-center">
+              <div
+                className={`p-3 rounded-md text-sm w-full max-w-sm text-center ${
+                  message.includes("berhasil")
+                    ? "bg-green-100 text-green-700"
+                    : message.includes("verifikasi")
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
                 {message}
               </div>
             )}
@@ -90,6 +207,11 @@ const LoginForm = () => {
                   placeholder="Masukkan Kata Sandi"
                   value={formData.password}
                   onChange={handleChange}
+                  className={
+                    passwordErrors.length > 0 && formData.password
+                      ? "border-red-500"
+                      : ""
+                  }
                   required
                 />
                 <button
@@ -103,17 +225,90 @@ const LoginForm = () => {
                   {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                 </button>
               </div>
+              <div className="flex justify-end w-full max-w-sm">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-sm text-red-400 hover:underline"
+                >
+                  Lupa password?
+                </Link>
+              </div>
+
+              {/* Password Requirements - hanya show jika user mengetik */}
+              {formData.password && (
+                <div className="text-xs space-y-1 mt-2">
+                  <p className="font-medium text-gray-700">Format Password:</p>
+                  <div className="space-y-1">
+                    <div
+                      className={`flex items-center gap-2 ${
+                        formData.password.length >= 8
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }`}
+                    >
+                      <span>{formData.password.length >= 8 ? "✓" : "✗"}</span>
+                      <span>Minimal 8 karakter</span>
+                    </div>
+                    <div
+                      className={`flex items-center gap-2 ${
+                        /[A-Z]/.test(formData.password)
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }`}
+                    >
+                      <span>{/[A-Z]/.test(formData.password) ? "✓" : "✗"}</span>
+                      <span>Minimal 1 huruf besar</span>
+                    </div>
+                    <div
+                      className={`flex items-center gap-2 ${
+                        /[a-z]/.test(formData.password)
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }`}
+                    >
+                      <span>{/[a-z]/.test(formData.password) ? "✓" : "✗"}</span>
+                      <span>Minimal 1 huruf kecil</span>
+                    </div>
+                    <div
+                      className={`flex items-center gap-2 ${
+                        /[0-9]/.test(formData.password)
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }`}
+                    >
+                      <span>{/[0-9]/.test(formData.password) ? "✓" : "✗"}</span>
+                      <span>Minimal 1 angka</span>
+                    </div>
+                    <div
+                      className={`flex items-center gap-2 ${
+                        /[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }`}
+                    >
+                      <span>
+                        {/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
+                          ? "✓"
+                          : "✗"}
+                      </span>
+                      <span>Minimal 1 karakter khusus (!@#$%^&*)</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <Button
               type="submit"
-              className="bg-navy-200 hover:bg-navy-400 w-full max-w-sm mt-4"
-              disabled={loading}
+              className="bg-navy-200 hover:bg-navy-400 w-full max-w-sm mt-6"
+              disabled={
+                loading || (!!formData.password && passwordErrors.length > 0)
+              }
             >
               {loading ? "Masuk..." : "Login"}
             </Button>
 
-            <p className="text-center">
+            <p className="text-sm text-center">
               Tidak memiliki akun?{" "}
               <Link
                 href="/auth/regis"

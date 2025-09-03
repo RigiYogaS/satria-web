@@ -7,6 +7,7 @@ import {
   Clock7,
   ChevronDown,
   ChevronRight,
+  LogOut
 } from "lucide-react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 
@@ -18,13 +19,18 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 
 import Image from "next/image";
 
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+
+import { Button } from "./ui/button";
 
 const AppSidebarUser = () => {
+  const { user, logout } = useAuth();
   const [absensiOpen, setAbsensiOpen] = useState(false);
   const [cutiOpen, setCutiOpen] = useState(false);
   return (
@@ -39,8 +45,9 @@ const AppSidebarUser = () => {
             <Image src="/logo/divhub.png" alt="Logo" width={40} height={40} />
             <span className="group-data-[collapsible=icon]:hidden">SATRIA</span>
           </div>
+
           {/* ISI SIDEBAR */}
-          <SidebarGroupContent>
+          <SidebarGroupContent className="mt-3">
             <SidebarMenu>
               {/* Dashboard */}
               <SidebarMenuItem>
@@ -178,6 +185,13 @@ const AppSidebarUser = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <Button onClick={logout} variant="outline" className="w-full">
+          <LogOut className="group-data-[collapsible=icon]:block group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5 hidden" />
+          <span className="group-data-[collapsible=icon]:hidden">Logout</span>
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   );
 };
