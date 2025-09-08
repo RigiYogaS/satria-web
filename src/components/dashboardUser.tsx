@@ -5,9 +5,9 @@ import { Button } from "./ui/button";
 import Link from "next/link";
 import AppSidebarUser from "./app-sidebarUser";
 import AppBreadcrumb from "./AppBreadcrumb";
-import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/router";
+
 
 interface User {
   id_user: number;
@@ -46,7 +46,7 @@ const DashboardUser = () => {
             Jangan lupa melakukan absensi dan upload laporan mingguanmu
           </p>
           <Button asChild className="bg-navy-200 hover:bg-navy-400 mt-2">
-            <Link href={"/AbsenToday"}>Absen Disini</Link>
+            <Link href={"/user/absensi/hari-ini"}>Absen Disini</Link>
           </Button>
         </div>
       </main>
