@@ -110,13 +110,13 @@ const AbsenToday = () => {
               </div>
             )}
 
-            {/* Placeholder before check in */}
+            {/* Sebelum Checkin */}
             {!isCheckedIn && (
-              <div className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                <p className="text-gray-500 text-lg font-medium mb-2">
+              <div className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center h-full flex flex-col justify-center">
+                <p className="text-navy-500 text-3xl font-bold mb-2">
                   📋 Status Absensi
                 </p>
-                <p className="text-gray-400 text-sm">
+                <p className="text-neutral-500 text-sm">
                   Status akan muncul setelah Anda melakukan check in
                 </p>
               </div>

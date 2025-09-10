@@ -30,7 +30,7 @@ const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
     const [isVisible, setIsVisible] = useState<boolean>(false);
 
     // Mock IP address untuk development
-    const mockIpAddress = "127.0.0.1";
+    const mockIpAddress = "192.168.200.53.0.0.1";
 
     useImperativeHandle(ref, () => ({
       triggerCheckIn: (data: AbsenData) => {

@@ -2,11 +2,13 @@
 
 import { Clock, MapPin, Wifi, CircleAlert } from "lucide-react";
 
+// Add currentIP prop to interface
 interface LocationCardProps {
   jamDatang?: string;
   jamKeluar?: string;
   lokasi?: string;
   ipAddress?: string;
+  currentIP?: string; // Add this
   isCheckedOut?: boolean;
 }
 
@@ -15,12 +17,15 @@ const LocationCard = ({
   jamKeluar = "--.--.--",
   lokasi = "",
   ipAddress = "192.168.1.100",
+  currentIP = "192.168.200.53", // Add this with default
   isCheckedOut = false,
 }: LocationCardProps) => {
+  const isValidNetwork = currentIP === "192.168.200.53";
+
   return (
-    <div className="bg-white rounded-lg shadow-md border p-6 max-w-md mx-auto">
+    <div className="bg-white rounded-lg shadow-md border p-6 max-w-md mx-auto min-h-[500px]">
       {/* Header */}
-      <h2 className="text-3xl font-bold text-navy-500 mb-6 text-center">
+      <h2 className="text-3xl font-bold text-navy-500 mb-9 text-center">
         Status Absensi
       </h2>
 
@@ -45,30 +50,60 @@ const LocationCard = ({
         </div>
       </div>
 
-      {/* Lokasi */}
-      <div className="mb-6 flex">
-        <MapPin className="text-navy-500 mr-2 mt-0.5 flex-shrink-0" size={40} />
-        <div>
-          <span className="text-sm text-neutral-400">Lokasi</span>
-          <p className="text-sm text-neutral-700 leading-relaxed ">{lokasi}</p>
+      <div className="my-9">
+        {/* Lokasi */}
+        <div className="mb-6 flex">
+          <MapPin
+            className="text-navy-500 mr-2 mt-0.5 flex-shrink-0"
+            size={40}
+          />
+          <div>
+            <span className="text-sm text-neutral-400">Lokasi</span>
+            <p className="text-sm text-neutral-700 leading-relaxed ">
+              {lokasi}
+            </p>
+          </div>
+        </div>
+
+        {/* IP Address */}
+        <div className="mb-6 flex bg-neutral-">
+          <Wifi className="text-navy-500 mr-2 mt-0.5 flex-shrink-0" size={40} />
+          <div>
+            <span className="text-sm text-neutral-400">IP Address</span>
+            <p className="text-sm font-mono text-neutral-700 leading-relaxed ">
+              {ipAddress}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* IP Address */}
+      {/* Network Info */}
       <div className="mb-6 flex">
-        <Wifi className="text-navy-500 mr-2 mt-0.5 flex-shrink-0" size={40} />
+        <Wifi
+          className={`mr-2 mt-0.5 flex-shrink-0 ${
+            isValidNetwork ? "text-green-600" : "text-red-600"
+          }`}
+          size={40}
+        />
         <div>
-          <span className="text-sm text-neutral-400">IP Address</span>
-          <p className="text-sm font-mono text-neutral-700 leading-relaxed ">
-            {ipAddress}
+          <span className="text-sm text-neutral-400">Jaringan</span>
+          <p className="text-sm font-mono text-neutral-700 leading-relaxed">
+            {currentIP}
+          </p>
+          <p
+            className={`text-xs mt-1 ${
+              isValidNetwork ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {isValidNetwork ? "✅ Jaringan kantor" : "❌ Jaringan tidak valid"}
           </p>
         </div>
       </div>
 
       {/* Status Badge */}
-      <div className="flex justify-center">
+      <div className="flex">
         <div
-          className={`inline-flex items-center px-4 py-2 rounded-sm text-sm font-medium ${
+          className={`flex w-full justify-center items-center px-4 py-3 rounded-md text-md font-medium ${
             isCheckedOut
               ? "bg-green-200 text-green-800"
               : "bg-amber-100 text-amber-600"

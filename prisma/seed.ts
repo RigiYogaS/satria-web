@@ -22,20 +22,28 @@ async function main() {
     { nama_divisi: "Bagwakinter" },
   ];
 
-  for (const divisi of divisiData) {
-    await prisma.divisi.upsert({
-      where: { nama_divisi: divisi.nama_divisi },
-      update: {},
-      create: divisi,
-    });
-  }
+  console.log("Mulai seeding divisi...");
+  const divisiResult = await prisma.divisi.createMany({
+    data: divisiData,
+    skipDuplicates: true,
+  });
+  console.log("Selesai seeding divisi:", divisiResult);
 
-  console.log("✅ Seed data berhasil ditambahkan!");
+  console.log("Mulai seeding ip_lokasi...");
+  const ipResult = await prisma.ipLokasi.create({
+    data: {
+      ip: "192.168.200.53",
+      nama_wifi: "DIVHUBINTER POLRI",
+    },
+  });
+  console.log("Selesai seeding ip_lokasi:", ipResult);
+
+  console.log("semua seed berhasil!");
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("Error saat seeding:", e);
     process.exit(1);
   })
   .finally(async () => {

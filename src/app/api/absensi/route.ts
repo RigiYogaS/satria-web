@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import {prisma} from "@/lib/prisma";
 
 // GET /api/absensi - Get all attendance records
 export async function GET(request: NextRequest) {
@@ -91,6 +89,28 @@ export async function POST(request: NextRequest) {
           error: "User not found",
         },
         { status: 404 }
+      );
+    }
+
+    // Ambil IP dari header
+    const forwarded = request.headers.get("x-forwarded-for");
+    const real = request.headers.get("x-real-ip");
+    let clientIP = forwarded?.split(",")[0]?.trim() || real || "unknown";
+    if (clientIP.startsWith("::ffff:")) clientIP = clientIP.substring(7);
+
+    // Cek ke database ipLokasi
+    const ipTerdaftar = await prisma.ipLokasi.findUnique({
+      where: { ip: clientIP },
+    });
+
+    if (!ipTerdaftar) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "IP tidak terdaftar, harus menggunakan jaringan kantor",
+          ip: clientIP,
+        },
+        { status: 403 }
       );
     }
 

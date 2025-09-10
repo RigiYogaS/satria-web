@@ -2,6 +2,7 @@
 
 import { useState, forwardRef, useImperativeHandle } from "react";
 import { FileText, AlertCircle } from "lucide-react";
+import { Progress } from "@/components/ui/progress"; // Import dari path yang benar
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface LaporanHarianProps {}
@@ -34,22 +35,30 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
     const charCount = laporan.length;
     const hasContent = laporan.trim().length > 0;
 
+    // Calculate progress percentage based on content
+    const getProgressValue = () => {
+      if (charCount === 0) return 0;
+      if (charCount >= 50) return 100;
+      return (charCount / 50) * 100;
+    };
+
+    const progressValue = getProgressValue();
+
     return (
-      <div className="bg-white rounded-lg shadow-md border p-6 max-w-4xl mx-auto">
+      <div className="bg-white rounded-lg shadow-md border p-6 mx-auto w-full">
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <FileText className="text-navy-500" size={24} />
-          <h2 className="text-lg font-bold text-navy-500">Laporan Harian</h2>
-          <span className="text-red-500 text-sm">*Wajib diisi</span>
+          <h2 className="text-xl font-bold text-navy-500">Laporan Harian</h2>
         </div>
 
         {/* Warning Info */}
-        <div className="flex items-start gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg mb-4">
+        <div className="flex items-start gap-3 p-3 bg-amber-100 border border-orange-200 rounded-lg mb-4">
           <AlertCircle
-            className="text-orange-600 mt-0.5 flex-shrink-0"
+            className="text-amber-600 mt-0.5 flex-shrink-0"
             size={16}
           />
-          <p className="text-sm text-orange-700">
+          <p className="text-sm text-amber-600">
             Laporan harian harus diisi sebelum melakukan check out. Deskripsikan
             aktivitas dan pencapaian Anda hari ini.
           </p>
@@ -63,12 +72,12 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder="Contoh: Hari ini saya telah menyelesaikan review code untuk fitur absensi, menghadiri meeting dengan tim development, dan melakukan testing untuk bug fixing pada modul user management..."
-            className={`w-full h-32 p-4 border rounded-lg resize-none transition-all duration-200 ${
+            className={`w-full h-32 p-4 border rounded-lg resize-none transition-all duration-200 placeholder:text-sm ${
               isFocused
-                ? "border-blue-500 ring-2 ring-blue-100"
+                ? "border-navy-300 ring-2 ring-navy-100"
                 : hasContent
                 ? "border-green-500"
-                : "border-gray-300"
+                : "border-neutral-300"
             } focus:outline-none`}
           />
         </div>
@@ -97,22 +106,25 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
                 : "bg-red-100 text-red-800"
             }`}
           >
-            {hasContent ? "✅ Siap" : "❌ Belum diisi"}
+            {hasContent ? "Siap" : "Belum diisi"}
           </div>
         </div>
 
         {/* Progress Bar */}
         <div className="mt-3">
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className={`h-2 rounded-full transition-all duration-300 ${
-                hasContent ? "bg-green-500" : "bg-red-500"
-              }`}
-              style={{ width: hasContent ? "100%" : "0%" }}
-            ></div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs text-gray-500">Progress</span>
+            <span className="text-xs text-gray-400">
+              {Math.round(progressValue)}%
+            </span>
           </div>
+          <Progress value={progressValue} className="h-2" />
+          <p className="text-xs text-gray-400 mt-1">
+            {progressValue < 100
+              ? "Minimal 50 karakter untuk menyelesaikan laporan"
+              : "Laporan sudah cukup lengkap!"}
+          </p>
         </div>
-
       </div>
     );
   }
