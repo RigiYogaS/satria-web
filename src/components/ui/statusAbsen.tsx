@@ -56,8 +56,6 @@ const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
     }
 
     return (
-      <div className="space-y-4 w-full max-w-md">
-
         <LocationCard
           jamDatang={absenData.jamDatang}
           jamKeluar={currentCheckOutTime}
@@ -65,8 +63,6 @@ const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
           ipAddress={mockIpAddress}
           isCheckedOut={isCheckedOut}
         />
-        
-      </div>
     );
   }
 );

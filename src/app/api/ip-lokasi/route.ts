@@ -1,26 +1,51 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// GET: List all IPs
+// GET: Mendapatkan semua IP yang diizinkan
 export async function GET() {
-  const data = await prisma.ipLokasi.findMany();
-  return NextResponse.json(data);
-}
+  try {
+    const ipData = await prisma.ipLokasi.findMany({
+      select: {
+        id: true,
+        ip: true,
+        nama_wifi: true,
+        created_at: true,
+      },
+    });
 
-// POST: Add new IP
-export async function POST(request: NextRequest) {
-  const { ip, nama_wifi } = await request.json();
-  if (!ip || !nama_wifi) {
+    return NextResponse.json(ipData);
+  } catch (error) {
+    console.error("Error fetching IP data:", error);
     return NextResponse.json(
-      { error: "IP dan nama wifi wajib diisi" },
-      { status: 400 }
+      { error: "Gagal mengambil data IP" },
+      { status: 500 }
     );
   }
+}
+
+// POST: Menambah IP baru (untuk admin)
+export async function POST(request: Request) {
   try {
-    const created = await prisma.ipLokasi.create({ data: { ip, nama_wifi } });
-    return NextResponse.json(created);
-  } catch (e) {
-    return NextResponse.json({ error: "IP sudah terdaftar" }, { status: 400 });
+    const { ip, nama_wifi } = await request.json();
+
+    if (!ip || !nama_wifi) {
+      return NextResponse.json(
+        { error: "IP dan nama WiFi wajib diisi" },
+        { status: 400 }
+      );
+    }
+
+    const newIP = await prisma.ipLokasi.create({
+      data: { ip, nama_wifi },
+    });
+
+    return NextResponse.json(newIP);
+  } catch (error) {
+    console.error("Error creating IP:", error);
+    return NextResponse.json(
+      { error: "IP sudah terdaftar atau terjadi kesalahan" },
+      { status: 400 }
+    );
   }
 }
 

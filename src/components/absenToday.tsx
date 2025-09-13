@@ -29,7 +29,9 @@ const AbsenToday = () => {
     triggerCheckOut: (data: AbsenData) => void;
   }>(null);
 
-  const laporanRef = useRef<LaporanHarianHandle>(null) as React.RefObject<LaporanHarianHandle>;
+  const laporanRef = useRef<LaporanHarianHandle>(
+    null
+  ) as React.RefObject<LaporanHarianHandle>;
 
   const handleCheckIn = (absenData: AbsenData): void => {
     setIsCheckedIn(true);
@@ -87,21 +89,22 @@ const AbsenToday = () => {
           </div>
 
           {/* Layout Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
             {/* AbsenCard - Always show */}
-            <div className="w-full">
+            <div className="w-full h-full">
               <AbsenCard
                 onCheckIn={handleCheckIn}
                 onCheckOut={handleCheckOut}
                 isCheckedIn={isCheckedIn}
                 isCheckedOut={isCheckedOut}
                 checkInTime={checkInTime}
+                laporanRef={laporanRef}
               />
             </div>
 
             {/* StatusAbsen - Show after check in */}
             {isCheckedIn && (
-              <div className="w-full">
+              <div className="w-full h-full">
                 <StatusAbsen
                   ref={statusAbsenRef}
                   checkOutTime={checkOutTime}
@@ -112,7 +115,7 @@ const AbsenToday = () => {
 
             {/* Sebelum Checkin */}
             {!isCheckedIn && (
-              <div className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center h-full flex flex-col justify-center">
+              <div className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center min-h-[500px] flex flex-col justify-center">
                 <p className="text-navy-500 text-3xl font-bold mb-2">
                   📋 Status Absensi
                 </p>

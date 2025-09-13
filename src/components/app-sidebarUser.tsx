@@ -57,7 +57,7 @@ const AppSidebarUser = () => {
                   tooltip="Dashboard"
                 >
                   <a
-                    href="/user/dashboard"
+                    href="/user/dashboardUser"
                     className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center"
                   >
                     <Home />
