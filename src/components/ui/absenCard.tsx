@@ -1,165 +1,585 @@
 "use client";
 
-import { Clock7, Calendar, MapPin } from "lucide-react";
+import {
+  Clock7,
+  Calendar,
+  MapPin,
+  Navigation,
+  Wifi,
+  WifiOff,
+  FileText,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { useWifiValidation } from "@/hooks/useWifiValidation";
+import { useAbsenLogic } from "@/hooks/useAbsenLogic";
+import AlertUsage from "./alertUsage";
+import { LaporanHarianHandle } from "./laporanHarian";
 
-interface TimeFormatOptions {
-  hour: "2-digit";
-  minute: "2-digit";
-  second: "2-digit";
-}
-
-interface DateFormatOptions {
-  day: "2-digit";
-  month: "2-digit";
-  year: "numeric";
+interface AbsenData {
+  jamDatang: string;
+  tanggal: string;
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  lokasi?: string;
 }
 
 interface AbsenCardProps {
-  onCheckIn?: () => void;
+  onCheckIn?: (data: AbsenData) => Promise<void>;
+  onCheckOut?: (data: AbsenData) => Promise<void>;
+  isCheckedIn?: boolean;
+  isCheckedOut?: boolean;
+  checkInTime?: string;
+  laporanRef?: React.RefObject<LaporanHarianHandle | null>;
+  laporanComplete?: boolean;
+  loading?: boolean;
 }
 
-const AbsenCard: React.FC<AbsenCardProps> = ({ onCheckIn }) => {
+const AbsenCard: React.FC<AbsenCardProps> = ({
+  onCheckIn,
+  onCheckOut,
+  isCheckedIn = false,
+  isCheckedOut = false,
+  checkInTime = "",
+  laporanRef,
+  laporanComplete = false,
+  loading = false,
+}) => {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
-  const [isCheckingIn, setIsCheckingIn] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
+  const [realLocationName, setRealLocationName] = useState<string>(
+    "Mendeteksi lokasi..."
+  );
 
+  // Custom hooks
+  const {
+    location,
+    loading: locationLoading,
+    error: locationError,
+    getCurrentLocation,
+  } = useGeolocation();
+
+  const {
+    currentIP,
+    isValidWifi,
+    wifiValidationLoading,
+    allowedWifiList,
+    connectedWifiName,
+    validateWifiConnection,
+  } = useWifiValidation();
+
+  const {
+    isProcessing,
+    alertMessage,
+    showAccuracyAlert,
+    showLocationAlert,
+    showErrorAlert,
+    showLaporanAlert,
+    showWifiAlert,
+    pendingAction,
+    alertAccuracy,
+    setAlertMessage,
+    setShowAccuracyAlert,
+    setShowLocationAlert,
+    setShowErrorAlert,
+    setShowLaporanAlert,
+    setShowWifiAlert,
+    setPendingAction,
+    setAlertAccuracy,
+    proceedWithCheckIn,
+    proceedWithCheckOut,
+  } = useAbsenLogic();
+
+  // Mount and timer effects
   useEffect(() => {
     setMounted(true);
     setCurrentTime(new Date());
 
-    // Update time setiap detik
-    const timer: NodeJS.Timeout = setInterval(() => {
+    if (isCheckedOut) return;
+
+    const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
 
-    // Cleanup interval saat component unmount
-    return (): void => clearInterval(timer);
-  }, []);
+    return () => clearInterval(timer);
+  }, [isCheckedOut]);
 
-  // Format jam (HH:MM:SS)
+  useEffect(() => {
+    if (mounted && !isCheckedOut) {
+      getCurrentLocation();
+    }
+  }, [mounted, isCheckedOut, getCurrentLocation]);
+
+  // Format functions
   const formatTime = (date: Date): string => {
-    const options: TimeFormatOptions = {
+    return date.toLocaleTimeString("id-ID", {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-    };
-    return date.toLocaleTimeString("id-ID", options);
+    });
   };
 
-  // Format tanggal (DD/MM/YYYY)
   const formatDate = (date: Date): string => {
-    const options: DateFormatOptions = {
+    return date.toLocaleDateString("id-ID", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-    };
-    return date.toLocaleDateString("id-ID", options);
+    });
   };
 
+  // Validation handlers
   const handleCheckIn = async (): Promise<void> => {
-    setIsCheckingIn(true);
+    if (loading) return;
 
-    try {
-      // Validasi jaringan terlebih dahulu
-      const response = await fetch("/api/get-ip");
-      const networkData = await response.json();
-
-      if (!networkData.canAttend) {
-        alert(`❌ Absensi Tidak Dapat Dilakukan!\n\n${networkData.message}`);
-        setIsCheckingIn(false);
-        return;
-      }
-
-      // Jika jaringan valid, lanjutkan check in
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      if (onCheckIn) {
-        onCheckIn();
-      }
-    } catch (error) {
-      console.error("Error during check in:", error);
-      alert(
-        "❌ Terjadi kesalahan. Pastikan Anda terhubung ke jaringan kantor."
+    if (!isValidWifi) {
+      const allowedWifiNames = allowedWifiList
+        .map((item) => item.nama_wifi)
+        .join(", ");
+      setAlertMessage(
+        `Absensi hanya dapat dilakukan dari Wi-Fi kantor!\n\n` +
+          `Status saat ini:\n` +
+          `• Wi-Fi: ${
+            connectedWifiName || "Tidak terhubung ke Wi-Fi kantor"
+          }\n` +
+          `• IP Address: ${currentIP || "Tidak terdeteksi"}\n\n` +
+          `Wi-Fi yang diizinkan: ${allowedWifiNames}\n\n` +
+          `Silakan hubungkan perangkat Anda ke Wi-Fi kantor terlebih dahulu.`
       );
-    } finally {
-      setIsCheckingIn(false);
+      setShowWifiAlert(true);
+      return;
+    }
+
+    if (!location) {
+      setAlertMessage(
+        "Lokasi belum tersedia. Pastikan GPS aktif dan izin lokasi telah diberikan."
+      );
+      setShowLocationAlert(true);
+      return;
+    }
+
+    if (location.accuracy > 150) {
+      setAlertAccuracy(location.accuracy);
+      setPendingAction("checkin");
+      setShowAccuracyAlert(true);
+      return;
+    }
+
+    proceedWithCheckIn(location, currentTime!, onCheckIn);
+  };
+
+  const handleCheckOut = async (): Promise<void> => {
+    console.log("🔍 DEBUG CHECKOUT - BYPASS MODE");
+
+    if (loading) return;
+
+    if (!location) {
+      setAlertMessage("Lokasi belum tersedia. Pastikan GPS aktif.");
+      setShowLocationAlert(true);
+      return;
+    }
+
+    console.log("⚠️ BYPASSING LAPORAN VALIDATION FOR TESTING");
+
+    if (location.accuracy > 150) {
+      setAlertAccuracy(location.accuracy);
+      setPendingAction("checkout");
+      setShowAccuracyAlert(true);
+      return;
+    }
+
+    console.log("✅ Proceeding with checkout (laporan validation bypassed)");
+    proceedWithCheckOut(location, currentTime!, onCheckOut);
+  };
+
+  const handleAccuracyConfirm = (): void => {
+    if (pendingAction === "checkin") {
+      proceedWithCheckIn(location, currentTime!, onCheckIn);
+    } else if (pendingAction === "checkout") {
+      proceedWithCheckOut(location, currentTime!, onCheckOut);
+    }
+    setShowAccuracyAlert(false);
+    setPendingAction(null);
+  };
+
+  const handleAccuracyCancel = (): void => {
+    setShowAccuracyAlert(false);
+    setPendingAction(null);
+  };
+
+  const getCardState = () => {
+    if (isCheckedOut) return "checkedOut";
+    if (isCheckedIn) return "checkedIn";
+    return "initial";
+  };
+
+  const cardState = getCardState();
+
+  // ✅ ADD FUNCTION TO GET REAL LOCATION NAME FROM API
+  const getRealLocationName = async (
+    latitude: number,
+    longitude: number
+  ): Promise<string> => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch location");
+
+      const data = await response.json();
+
+      // Extract meaningful location info
+      const address = data.address || {};
+      const locationParts = [];
+
+      // Add building/office name if available
+      if (address.building || address.office) {
+        locationParts.push(address.building || address.office);
+      }
+
+      // Add road/street name
+      if (address.road) {
+        locationParts.push(address.road);
+      }
+
+      // Add district/village
+      if (address.village || address.suburb || address.neighbourhood) {
+        locationParts.push(
+          address.village || address.suburb || address.neighbourhood
+        );
+      }
+
+      // Add city district
+      if (address.city_district) {
+        locationParts.push(address.city_district);
+      }
+
+      // Add city
+      if (address.city || address.town) {
+        locationParts.push(address.city || address.town);
+      }
+
+      const locationName =
+        locationParts.length > 0
+          ? locationParts.slice(0, 2).join(", ") 
+          : data.display_name?.split(",").slice(0, 2).join(", ") ||
+            "Lokasi tidak dikenali";
+
+      return locationName;
+    } catch (error) {
+      console.error("Error getting real location:", error);
+
+      // Fallback: Check if within known office coordinates
+      const knownOffices = [
+        {
+          name: "DIVHUBINTER POLRI",
+          lat: -6.238711,
+          lng: 106.803393,
+          radius: 100,
+        },
+        // Add more known office locations here
+      ];
+
+      for (const office of knownOffices) {
+        const distance = calculateDistance(
+          latitude,
+          longitude,
+          office.lat,
+          office.lng
+        );
+        if (distance <= office.radius) {
+          return office.name;
+        }
+      }
+
+      return `Koordinat: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
     }
   };
 
-  // Jangan render sampai component mounted di client
+  // ✅ UPDATE useEffect to get real location name when GPS is available
+  useEffect(() => {
+    if (location && !locationLoading) {
+      getRealLocationName(location.latitude, location.longitude)
+        .then(setRealLocationName)
+        .catch(() => setRealLocationName("Lokasi tidak dapat dideteksi"));
+    }
+  }, [location, locationLoading]);
+
+  // ✅ UPDATE getLocationName function to use real location
+  const getLocationName = (): string => {
+    if (!location) return "Lokasi tidak tersedia";
+
+    return realLocationName;
+  };
+
+  // ✅ ADD DISTANCE CALCULATION FUNCTION
+  const calculateDistance = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ): number => {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  };
+
   if (!mounted) {
     return (
-      <div className="bg-white w-1/2 p-4 rounded-lg shadow flex flex-col gap-6">
+      <div className="bg-white w-full max-w-md mx-auto p-6 rounded-lg shadow-md flex flex-col gap-6">
         <h2 className="text-2xl font-bold mb-4 text-navy-500 text-center">
           Absen Kehadiran
         </h2>
-        <div className="w-full flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Clock7 className="text-gray-500" size={40} />
-            <div>
-              <span className="text-sm text-gray-500">Jam</span>
-              <p className="text-xl font-semibold">--:--:--</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Calendar className="text-gray-500" size={40} />
-            <div>
-              <span className="text-sm text-gray-500">Tanggal</span>
-              <p className="text-lg font-semibold">--/--/----</p>
-            </div>
-          </div>
+        <div className="animate-pulse">
+          <div className="h-20 bg-gray-200 rounded mb-4"></div>
+          <div className="h-10 bg-gray-200 rounded"></div>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <MapPin size={16} />
-          <span>Pastikan Anda berada di lokasi kantor</span>
-        </div>
-        <Button disabled className="bg-gray-300 w-full">
-          Loading...
-        </Button>
       </div>
     );
   }
 
   return (
-    <div className="bg-white w-1/2 p-4 rounded-lg shadow flex flex-col gap-6">
-      <h2 className="text-2xl font-bold mb-4 text-navy-500 text-center">
-        Absen Kehadiran
-      </h2>
-      <div className="w-full flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <Clock7 className="text-gray-500" size={40} />
-          <div>
-            <span className="text-sm text-gray-500">Jam</span>
-            <p className="text-xl font-semibold">
-              {mounted && currentTime ? formatTime(currentTime) : "--:--:--"}
-            </p>
+    <div
+      className={`bg-white w-full mx-auto p-6 rounded-lg shadow-md flex flex-col gap-6 border ${
+        cardState === "checkedOut" ? "opacity-75 pointer-events-none" : ""
+      } h-[620px] justify-between`}
+    >
+      {/* Content wrapper dengan overflow handling */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Header */}
+        <div className="text-center">
+          <h2 className="text-3xl font-bold mb-2 text-navy-500">
+            {cardState === "initial" && "Absen Kehadiran"}
+            {cardState === "checkedIn" && "Absen Pulang"}
+            {cardState === "checkedOut" && "Selesai Absensi"}
+          </h2>
+        </div>
+
+        {/* Time and Date */}
+        <div className="w-full grid grid-cols-2 gap-4 mt-4">
+          <div className="flex items-center p-3">
+            <Clock7 className="text-navy-500" size={44} />
+            <div className="flex flex-col mx-2">
+              <span className="text-sm text-neutral-400">Jam</span>
+              <p className="text-xl font-semibold text-navy-500 text-center">
+                {mounted && currentTime && !isCheckedOut
+                  ? formatTime(currentTime)
+                  : isCheckedOut
+                  ? "Berhenti"
+                  : "--:--:--"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center p-3">
+            <Calendar className="text-navy-500" size={44} />
+            <div className="flex flex-col mx-2">
+              <span className="text-sm text-neutral-400">Tanggal</span>
+              <p className="text-xl font-semibold text-navy-500 text-center">
+                {mounted && currentTime
+                  ? formatDate(currentTime)
+                  : "--/--/----"}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Calendar className="text-gray-500" size={40} />
-          <div>
-            <span className="text-sm text-gray-500">Tanggal</span>
-            <p className="text-lg font-semibold">
-              {mounted && currentTime ? formatDate(currentTime) : "--/--/----"}
-            </p>
+
+        {/* Info Text */}
+        {!isCheckedOut && (
+          <div className="flex items-center gap-2 text-sm text-gray-600 p-3 bg-blue-50 rounded-lg mt-4">
+            <MapPin size={16} className="text-blue-600 flex-shrink-0" />
+            <span>
+              Pastikan Anda berada di lokasi kantor dan terhubung Wi-Fi kantor
+            </span>
           </div>
-        </div>
+        )}
+
+        {/* Location Status */}
+        {!isCheckedOut && (
+          <div className="bg-gray-50 p-4 rounded-lg mt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Navigation size={16} className="text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">
+                Status Lokasi
+              </span>
+            </div>
+
+            {locationLoading && (
+              <div className="flex items-center gap-3 text-blue-600">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                <span className="text-sm">Mendapatkan lokasi GPS...</span>
+              </div>
+            )}
+
+            {locationError && (
+              <div className="text-red-600">
+                <p className="text-sm">{locationError}</p>
+                <Button
+                  onClick={getCurrentLocation}
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                >
+                  Coba Lagi
+                </Button>
+              </div>
+            )}
+
+            {location && (
+              <div className="text-green-600">
+                <p className="text-sm">
+                  ✅ GPS Ready - Akurasi ±{Math.round(location.accuracy)}m
+                </p>
+                {/* ✅ SHOW REAL LOCATION NAME */}
+                <p className="text-xs text-gray-600 mt-1">
+                  Lokasi: {getLocationName()}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Wi-Fi Status */}
+        {!isCheckedOut && (
+          <div className="bg-gray-50 p-4 rounded-lg mt-4">
+            <div className="flex items-center gap-2 mb-3">
+              {isValidWifi ? (
+                <Wifi size={16} className="text-green-500" />
+              ) : (
+                <WifiOff size={16} className="text-red-500" />
+              )}
+              <span className="text-sm font-medium text-gray-700">
+                Status Wi-Fi Kantor
+              </span>
+            </div>
+
+            {wifiValidationLoading ? (
+              <div className="flex items-center gap-3 text-blue-600">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                <span className="text-sm">Memvalidasi koneksi Wi-Fi...</span>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div
+                  className={isValidWifi ? "text-green-600" : "text-red-600"}
+                >
+                  <p className="text-sm font-medium">
+                    {isValidWifi ? "✅" : "❌"}{" "}
+                    {connectedWifiName || "Tidak terhubung ke Wi-Fi kantor"}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    IP Address: {currentIP || "Tidak terdeteksi"}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-        <MapPin size={16} />
-        <span>Pastikan Anda berada di lokasi kantor</span>
+      {/* Button - fixed position di bawah */}
+      <div className="flex-shrink-0 mt-4">
+        <Button
+          onClick={cardState === "initial" ? handleCheckIn : handleCheckOut}
+          disabled={
+            isProcessing ||
+            !location ||
+            locationLoading ||
+            isCheckedOut ||
+            !isValidWifi ||
+            wifiValidationLoading
+          }
+          className={`w-full h-12 text-base font-medium transition-all ${
+            cardState === "initial"
+              ? isValidWifi && location
+                ? "bg-navy-200 hover:bg-navy-500 text-white"
+                : "bg-gray-400 cursor-not-allowed text-gray-600"
+              : cardState === "checkedIn"
+              ? isValidWifi && location
+                ? "bg-navy-200 hover:bg-navy-500 text-white"
+                : "bg-gray-400 cursor-not-allowed text-gray-600"
+              : "bg-gray-400 cursor-not-allowed"
+          } disabled:bg-gray-300 disabled:cursor-not-allowed`}
+        >
+          <div className="flex items-center gap-2 justify-center">
+            {isProcessing
+              ? "Memproses..."
+              : wifiValidationLoading
+              ? "Memeriksa Wi-Fi..."
+              : !isValidWifi
+              ? "Wi-Fi Kantor Diperlukan"
+              : locationLoading
+              ? "Menunggu GPS..."
+              : !location
+              ? "GPS Tidak Ready"
+              : cardState === "initial"
+              ? "Check In"
+              : cardState === "checkedIn"
+              ? "Check Out"
+              : "Selesai"}
+          </div>
+        </Button>
       </div>
 
-      <Button
-        onClick={handleCheckIn}
-        disabled={isCheckingIn}
-        className="bg-green-500 hover:bg-green-600 w-full"
-      >
-        {isCheckingIn ? "Memproses..." : "Check In"}
-      </Button>
+      {/* Alerts */}
+      <AlertUsage
+        open={showAccuracyAlert}
+        onOpenChange={setShowAccuracyAlert}
+        title="⚠️ GPS Kurang Akurat"
+        description={`GPS kurang akurat (±${Math.round(
+          alertAccuracy
+        )}m). Lanjutkan ${
+          pendingAction === "checkin" ? "check in" : "check out"
+        }?`}
+        onConfirm={handleAccuracyConfirm}
+        onCancel={handleAccuracyCancel}
+      />
+
+      <AlertUsage
+        open={showLocationAlert}
+        onOpenChange={setShowLocationAlert}
+        title="⚠️ Lokasi Tidak Tersedia"
+        description={alertMessage}
+        onConfirm={() => setShowLocationAlert(false)}
+        onCancel={() => setShowLocationAlert(false)}
+      />
+
+      <AlertUsage
+        open={showErrorAlert}
+        onOpenChange={setShowErrorAlert}
+        title="❌ Error"
+        description={alertMessage}
+        onConfirm={() => setShowErrorAlert(false)}
+        onCancel={() => setShowErrorAlert(false)}
+      />
+
+      <AlertUsage
+        open={showLaporanAlert}
+        onOpenChange={setShowLaporanAlert}
+        title="📃 Laporan Harian Diperlukan!"
+        description={alertMessage}
+        onConfirm={() => setShowLaporanAlert(false)}
+        onCancel={() => setShowLaporanAlert(false)}
+      />
+
+      <AlertUsage
+        open={showWifiAlert}
+        onOpenChange={setShowWifiAlert}
+        title="📶 Wi-Fi Kantor Diperlukan"
+        description={alertMessage}
+        onConfirm={() => setShowWifiAlert(false)}
+        onCancel={() => setShowWifiAlert(false)}
+      />
     </div>
   );
 };

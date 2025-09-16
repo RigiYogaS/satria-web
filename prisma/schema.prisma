@@ -1,67 +1,64 @@
-// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model Users {
-  id_user        Int       @id @default(autoincrement())
+  id_user        Int        @id @default(autoincrement())
   nama           String
-  email          String    @unique
+  email          String     @unique
   password       String
   jabatan        String?
   divisi_id      Int
-  role           String    @default("pegawai")
-  status         String    @default("PENDING")
   otp_code       String?
   otp_expires_at DateTime?
-  created_at     DateTime  @default(now())
-  updated_at     DateTime  @default(now())
-
-  // Relations
-  absensi     Absensi[]
-  cuti        Cuti[]
-  laporan     Laporan[]
-  divisi      Divisi    @relation(fields: [divisi_id], references: [id_divisi])
+  created_at     DateTime   @default(now())
+  updated_at     DateTime   @default(now())
+  role           String
+  status         String @default("PENDING")
+  absensi        Absensi[]
+  cuti           Cuti[]
+  laporan        Laporan[]
+  divisi         Divisi     @relation(fields: [divisi_id], references: [id_divisi])
 
   @@map("users")
 }
 
 model Absensi {
-  id_absensi Int      @id @default(autoincrement())
-  user_id    Int
-  tanggal    DateTime @db.Date
-  waktu      DateTime @default(now())
-  lokasi     String?
-  ip_address String?
-  status     String
-  keterangan String?
-  created_at DateTime  @default(now())
-
-  // Relations
-  user Users @relation(fields: [user_id], references: [id_user], onDelete: Cascade)
+  id_absensi      Int           @id @default(autoincrement())
+  user_id         Int
+  tanggal         DateTime      @db.Date
+  waktu           DateTime      @default(now())
+  ip_address      String?
+  keterangan      String?
+  created_at      DateTime      @default(now())
+  status          AbsensiStatus
+  latitude        Decimal?
+  longitude       Decimal?
+  accuracy        Decimal?
+  jam_checkout    DateTime?
+  laporan_harian  String?
+  user            Users         @relation(fields: [user_id], references: [id_user], onDelete: Cascade)
 
   @@map("absensi")
 }
 
 model Cuti {
-  id_cuti           Int      @id @default(autoincrement())
+  id_cuti           Int        @id @default(autoincrement())
   user_id           Int
-  alasan            String   @db.VarChar(50)
+  alasan            String     @db.VarChar(50)
   bukti_file        String?
   keterangan        String?
   lebih_dari_sehari Boolean?
-  tgl_mulai         DateTime @db.Date
-  tgl_selesai       DateTime @db.Date
-  status            String   @default("pending")
-  created_at        DateTime @default(now())
-
-  // Relations
-  user Users @relation(fields: [user_id], references: [id_user], onDelete: Cascade)
+  tgl_mulai         DateTime   @db.Date
+  tgl_selesai       DateTime   @db.Date
+  created_at        DateTime   @default(now())
+  status            CutiStatus @default(pending)
+  user              Users      @relation(fields: [user_id], references: [id_user], onDelete: Cascade)
 
   @@map("cuti")
 }
@@ -74,31 +71,49 @@ model Laporan {
   tanggal_upload DateTime @default(now())
   nilai_admin    String?
   created_at     DateTime @default(now())
-
-  // Relations
-  user Users @relation(fields: [user_id], references: [id_user], onDelete: Cascade)
+  user           Users    @relation(fields: [user_id], references: [id_user], onDelete: Cascade)
 
   @@map("laporan")
 }
 
-model Ip_lokasi {
+model IpLokasi {
   id         Int      @id @default(autoincrement())
   ip         String   @unique
-  lokasi     String
+  nama_wifi  String
   created_at DateTime @default(now())
 
   @@map("ip_lokasi")
 }
 
 model Divisi {
-  id_divisi   Int     @id @default(autoincrement())
-  nama_divisi String  @unique
+  id_divisi   Int      @id @default(autoincrement())
+  nama_divisi String   @unique
   created_at  DateTime @default(now())
-
-  users Users[]
+  users       Users[]
 
   @@map("divisi")
 }
 
-// Note: Using String fields with validation in application layer
-// instead of database enums to match existing database schema
+enum AbsensiStatus {
+  Hadir
+  Telat
+  Izin
+  Alpha
+}
+
+enum CutiStatus {
+  pending
+  disetujui
+  ditolak
+}
+
+enum Role {
+  pegawai
+  admin
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+}

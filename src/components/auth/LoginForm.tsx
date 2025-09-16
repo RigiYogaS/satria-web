@@ -124,9 +124,9 @@ const LoginForm = () => {
         // Redirect ke dashboard berdasarkan role
         setTimeout(() => {
           if (data.user.role === "admin") {
-            router.push("/dashboardAdmin");
+            router.push("/admin/dashboardAdmin");
           } else {
-            router.push("/dashboardUser");
+            router.push("/user/dashboardUser");
           }
         }, 2000);
       } else {

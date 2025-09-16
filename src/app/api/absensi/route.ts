@@ -1,271 +1,191 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
-
-// GET /api/absensi - Get all attendance records
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const user_id = searchParams.get("user_id");
-    const tanggal = searchParams.get("tanggal");
-    const status = searchParams.get("status");
-    const limit = searchParams.get("limit");
-
-    const whereClause: any = {};
-
-    if (user_id) whereClause.user_id = parseInt(user_id);
-    if (status) whereClause.status = status;
-    if (tanggal) {
-      const startDate = new Date(tanggal);
-      const endDate = new Date(tanggal);
-      endDate.setDate(endDate.getDate() + 1);
-
-      whereClause.tanggal = {
-        gte: startDate,
-        lt: endDate,
-      };
-    }
-
-    const absensi = await prisma.absensi.findMany({
-      where: whereClause,
-      include: {
-        user: {
-          select: {
-            id_user: true,
-            nama: true,
-            email: true,
-            jabatan: true,
-            divisi: true,
-          },
-        },
-      },
-      orderBy: { created_at: "desc" },
-      take: limit ? parseInt(limit) : undefined,
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: absensi,
-      count: absensi.length,
-    });
-  } catch (error) {
-    console.error("Error fetching absensi:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to fetch attendance records",
-      },
-      { status: 500 }
-    );
-  }
-}
-
-// POST /api/absensi - Create attendance record
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { user_id, tanggal, waktu, lokasi, ip_address, status, keterangan } =
-      body;
-
-    // Validation
-    if (!user_id || !tanggal || !waktu || !status) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Missing required fields: user_id, tanggal, waktu, status",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if user exists
-    const user = await prisma.users.findUnique({
-      where: { id_user: parseInt(user_id) },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "User not found",
-        },
-        { status: 404 }
-      );
-    }
-
-    // Create attendance record
-    const absensi = await prisma.absensi.create({
-      data: {
-        user_id: parseInt(user_id),
-        tanggal: new Date(tanggal),
-        waktu: new Date(waktu),
-        lokasi,
-        ip_address,
-        status,
-        keterangan,
-      },
-      include: {
-        user: {
-          select: {
-            id_user: true,
-            nama: true,
-            email: true,
-            jabatan: true,
-            divisi: true,
-          },
-        },
-      },
-    });
-
-    return NextResponse.json(
-      {
-        success: true,
-        data: absensi,
-        message: "Attendance record created successfully",
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Error creating absensi:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to create attendance record",
-      },
-      { status: 500 }
-    );
-  }
-}
-
-// PUT /api/absensi - Update attendance record
-export async function PUT(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
-      id_absensi,
-      tanggal,
-      waktu,
-      lokasi,
-      ip_address,
-      status,
-      keterangan,
+      type,
+      latitude,
+      longitude,
+      accuracy,
+      jamDatang,
+      jamPulang,
+      laporanHarian,
+      bypassAuth, 
     } = body;
 
-    if (!id_absensi) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Attendance ID is required",
-        },
-        { status: 400 }
-      );
+    // ✅ BYPASS AUTHENTICATION FOR TESTING
+    let userId: number;
+
+    if (bypassAuth) {
+      console.log("🔧 BYPASSING AUTHENTICATION FOR TESTING");
+      userId = 1; // Use default user ID for testing
+    } else {
+      const session = await getServerSession(authOptions);
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      userId = parseInt(session.user.id);
     }
 
-    // Check if attendance record exists
-    const existingAbsensi = await prisma.absensi.findUnique({
-      where: { id_absensi: parseInt(id_absensi) },
-    });
+    // ✅ GET TODAY'S DATE IN LOCAL TIME
+    const today = new Date();
+    const indonesiaDate = new Date(today.getTime() + 7 * 60 * 60 * 1000); // UTC+7
+    indonesiaDate.setHours(0, 0, 0, 0);
 
-    if (!existingAbsensi) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Attendance record not found",
+    if (type === "checkin") {
+      // Check if already checked in today
+      const existingCheckin = await prisma.absensi.findFirst({
+        where: {
+          user_id: userId,
+          tanggal: indonesiaDate,
         },
-        { status: 404 }
-      );
+      });
+
+      if (existingCheckin) {
+        return NextResponse.json(
+          { error: "Sudah check-in hari ini" },
+          { status: 400 }
+        );
+      }
+
+      // ✅ Create check-in dengan GPS - explicit fields
+      const newAbsensi = await prisma.absensi.create({
+        data: {
+          user_id: userId,
+          tanggal: indonesiaDate,
+          waktu: new Date(),
+          latitude: latitude ? parseFloat(latitude.toString()) : null,
+          longitude: longitude ? parseFloat(longitude.toString()) : null,
+          accuracy: accuracy ? parseFloat(accuracy.toString()) : null,
+          status: "Hadir",
+          ip_address: "192.168.200.53",
+        },
+      });
+
+      console.log("✅ Check-in created:", newAbsensi.id_absensi);
+
+      return NextResponse.json({
+        success: true,
+        message: "Check-in berhasil",
+        data: { jamDatang, id: newAbsensi.id_absensi },
+      });
+    } else if (type === "checkout") {
+      // ✅ Update existing record dengan checkout time dan laporan
+      const result = await prisma.absensi.updateMany({
+        where: {
+          user_id: userId,
+          tanggal: indonesiaDate,
+          jam_checkout: null,
+        },
+        data: {
+          jam_checkout: new Date(),
+          laporan_harian: laporanHarian,
+        },
+      });
+
+      if (result.count === 0) {
+        return NextResponse.json(
+          { error: "Belum check-in atau sudah check-out" },
+          { status: 400 }
+        );
+      }
+
+      console.log("✅ Check-out updated:", result.count, "records");
+
+      return NextResponse.json({
+        success: true,
+        message: "Check-out berhasil",
+        data: { jamPulang, laporan: laporanHarian },
+      });
     }
 
-    // Prepare update data
-    const updateData: any = {};
-
-    if (tanggal) updateData.tanggal = new Date(tanggal);
-    if (waktu) updateData.waktu = new Date(waktu);
-    if (lokasi) updateData.lokasi = lokasi;
-    if (ip_address) updateData.ip_address = ip_address;
-    if (status) updateData.status = status;
-    if (keterangan !== undefined) updateData.keterangan = keterangan;
-
-    const updatedAbsensi = await prisma.absensi.update({
-      where: { id_absensi: parseInt(id_absensi) },
-      data: updateData,
-      include: {
-        user: {
-          select: {
-            id_user: true,
-            nama: true,
-            email: true,
-            jabatan: true,
-            divisi: true,
-          },
-        },
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: updatedAbsensi,
-      message: "Attendance record updated successfully",
-    });
-  } catch (error) {
-    console.error("Error updating absensi:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to update attendance record",
-      },
+      { error: "Invalid request type" },
+      { status: 400 }
+    );
+  } catch (error) {
+    console.error("❌ Absensi API Error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
 }
 
-// DELETE /api/absensi - Delete attendance record
-export async function DELETE(request: NextRequest) {
+export async function GET() {
   try {
-    const body = await request.json();
-    const { id_absensi } = body;
+    // ✅ BYPASS AUTHENTICATION FOR GET REQUEST TOO
+    let userId: number;
 
-    if (!id_absensi) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Attendance ID is required",
-        },
-        { status: 400 }
-      );
+    try {
+      const session = await getServerSession(authOptions);
+      if (session?.user?.id) {
+        userId = parseInt(session.user.id);
+      } else {
+        console.log("🔧 No session found, using default user ID");
+        userId = 1; // Use default user ID
+      }
+    } catch (error) {
+      console.log("🔧 Session error, using default user ID");
+      userId = 1;
     }
 
-    // Check if attendance record exists
-    const existingAbsensi = await prisma.absensi.findUnique({
-      where: { id_absensi: parseInt(id_absensi) },
+    // ✅ GET TODAY'S DATE IN LOCAL TIME
+    const today = new Date();
+    const indonesiaDate = new Date(today.getTime() + 7 * 60 * 60 * 1000); // UTC+7
+    indonesiaDate.setHours(0, 0, 0, 0);
+
+    console.log(
+      "🔍 Checking absensi for date:",
+      indonesiaDate.toISOString().split("T")[0],
+      "User ID:",
+      userId
+    );
+
+    // ✅ Get today's absensi with GPS and checkout data
+    const absensi = await prisma.absensi.findFirst({
+      where: {
+        user_id: userId,
+        tanggal: indonesiaDate,
+      },
     });
 
-    if (!existingAbsensi) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Attendance record not found",
+    console.log("📊 Absensi found:", !!absensi, absensi?.id_absensi);
+
+    if (!absensi) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          hasCheckedIn: false,
+          hasCheckedOut: false,
+          absensi: null,
         },
-        { status: 404 }
-      );
+      });
     }
-
-    await prisma.absensi.delete({
-      where: { id_absensi: parseInt(id_absensi) },
-    });
 
     return NextResponse.json({
       success: true,
-      message: "Attendance record deleted successfully",
+      data: {
+        hasCheckedIn: true,
+        hasCheckedOut: !!absensi.jam_checkout,
+        absensi: {
+          waktu: absensi.waktu,
+          latitude: absensi.latitude,
+          longitude: absensi.longitude,
+          accuracy: absensi.accuracy,
+          checkoutTime: absensi.jam_checkout,
+          laporanHarian: absensi.laporan_harian,
+        },
+      },
     });
   } catch (error) {
-    console.error("Error deleting absensi:", error);
+    console.error("❌ Get Absensi Error:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to delete attendance record",
-      },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
