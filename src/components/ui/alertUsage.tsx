@@ -35,8 +35,8 @@ const AlertUsage: React.FC<AlertUsageProps> = ({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>Batal</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Lanjutkan</AlertDialogAction>
+          {/* <AlertDialogCancel onClick={onCancel}>Batal</AlertDialogCancel> */}
+          <AlertDialogAction onClick={onConfirm}>Kembali</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

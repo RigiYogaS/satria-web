@@ -29,16 +29,20 @@ model Users {
 }
 
 model Absensi {
-  id_absensi Int           @id @default(autoincrement())
-  user_id    Int
-  tanggal    DateTime      @db.Date
-  waktu      DateTime      @default(now())
-  lokasi     String?
-  ip_address String?
-  keterangan String?
-  created_at DateTime      @default(now())
-  status     AbsensiStatus
-  user       Users         @relation(fields: [user_id], references: [id_user], onDelete: Cascade)
+  id_absensi      Int           @id @default(autoincrement())
+  user_id         Int
+  tanggal         DateTime      @db.Date
+  waktu           DateTime      @default(now())
+  ip_address      String?
+  keterangan      String?
+  created_at      DateTime      @default(now())
+  status          AbsensiStatus
+  latitude        Decimal?
+  longitude       Decimal?
+  accuracy        Decimal?
+  jam_checkout    DateTime?
+  laporan_harian  String?
+  user            Users         @relation(fields: [user_id], references: [id_user], onDelete: Cascade)
 
   @@map("absensi")
 }

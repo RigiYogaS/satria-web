@@ -106,7 +106,6 @@ export async function sendOTPEmail(
   }
 }
 
-// Fungsi untuk kirim email notifikasi registrasi berhasil
 export async function sendWelcomeEmail(
   email: string,
   nama: string
