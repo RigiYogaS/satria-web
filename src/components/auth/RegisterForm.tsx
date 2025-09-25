@@ -37,7 +37,6 @@ const RegisterForm = () => {
   useEffect(() => {
     const fetchDivisi = async () => {
       try {
-        console.log("Fetching divisi from API...");
         const response = await fetch("/api/divisi");
 
         if (!response.ok) {
@@ -45,19 +44,12 @@ const RegisterForm = () => {
         }
 
         const data = await response.json();
-        console.log("Divisi API response:", data);
+
 
         if (data.success && Array.isArray(data.data)) {
           setDivisiList(data.data);
-          console.log("Divisi loaded successfully:", data.data.length, "items");
-        } else {
-          console.error("Invalid API response format:", data);
-          throw new Error("Invalid API response format");
         }
       } catch (error) {
-        console.error("Error fetching divisi:", error);
-        console.log("Using fallback divisi data");
-
         // Fallback ke data static jika API gagal
         const fallbackData = [
           { id_divisi: 1, nama_divisi: "Bagprotokol" },
@@ -78,7 +70,6 @@ const RegisterForm = () => {
         ];
 
         setDivisiList(fallbackData);
-        console.log("Fallback data loaded:", fallbackData.length, "items");
       }
     };
 
@@ -181,8 +172,6 @@ const RegisterForm = () => {
         password: formData.password,
       };
 
-      console.log("Submitting data:", { ...submitData, password: "[HIDDEN]" });
-
       const response = await fetch("/api/users", {
         method: "POST",
         headers: {
@@ -214,12 +203,8 @@ const RegisterForm = () => {
         }, 2000);
       } else {
         setMessage(data.error || "Terjadi kesalahan");
-        if (data.details) {
-          console.error("Error details:", data.details);
-        }
       }
     } catch (error) {
-      console.error("Registration error:", error);
       setMessage("Terjadi kesalahan koneksi");
     } finally {
       setLoading(false);

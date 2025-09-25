@@ -8,7 +8,7 @@ interface LaporanHarianProps {
   className?: string;
   disabled?: boolean;
   defaultValue?: string;
-  onContentChange?: (hasContent: boolean) => void; // ✅ Tambah prop ini
+  onContentChange?: (hasContent: boolean) => void; 
 }
 
 export interface LaporanHarianHandle {
@@ -22,33 +22,23 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
     { className, disabled = false, defaultValue = "", onContentChange },
     ref
   ) => {
-    // ✅ Destructure onContentChange
-
     const [laporan, setLaporan] = useState<string>(defaultValue);
     const [isFocused, setIsFocused] = useState<boolean>(false);
 
     const MIN_CHARACTERS = 5;
     const RECOMMENDED_CHARACTERS = 100;
 
-    // ✅ Update useImperativeHandle dengan logging
     useImperativeHandle(ref, () => ({
       hasContent: () => {
         const trimmedText = laporan.trim();
         const result = trimmedText.length >= MIN_CHARACTERS;
-        console.log("🔍 hasContent called:", {
-          textLength: trimmedText.length,
-          minRequired: MIN_CHARACTERS,
-          result: result,
-        });
         return result;
       },
       getLaporan: () => {
         const result = laporan.trim();
-        console.log("📝 getLaporan called:", result.length, "chars");
         return result;
       },
       clearLaporan: () => {
-        console.log("🗑️ clearLaporan called");
         setLaporan("");
         if (onContentChange) onContentChange(false);
       },
@@ -59,12 +49,9 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
       const value = e.target.value;
       setLaporan(value);
 
-      console.log("📝 LaporanHarian text changed:", value.length, "chars");
-
       // ✅ Force callback setiap perubahan
       if (onContentChange) {
         const hasContent = value.trim().length >= MIN_CHARACTERS;
-        console.log("📞 Calling onContentChange:", hasContent);
         onContentChange(hasContent);
       }
     };
@@ -141,7 +128,7 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             disabled={disabled}
-            placeholder="Contoh: Hari ini saya menyelesaikan review code untuk fitur absensi dan menghadiri meeting dengan tim development..."
+            placeholder="Tulis laporan harian Anda di sini..."
             className={`w-full min-h-[8rem] max-h-[16rem] p-4 border rounded-lg resize-y transition-all duration-200 placeholder:text-sm ${
               disabled
                 ? "bg-gray-100 cursor-not-allowed opacity-60"
@@ -172,12 +159,6 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
               {trimmedCharCount}/{MIN_CHARACTERS} karakter minimal
             </span>
 
-            {hasMinContent && (
-              <span className="text-green-600 text-xs">
-                ✅ Syarat terpenuhi
-              </span>
-            )}
-
             <span className="text-gray-400 text-xs">
               {charCount} karakter total
             </span>
@@ -189,28 +170,6 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
           >
             {status.text}
           </div>
-        </div>
-
-        {/* Progress Bar */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-medium text-gray-600">
-              Kelengkapan
-            </span>
-            <span className="text-xs text-gray-500">
-              {Math.round(progressValue)}%
-              {trimmedCharCount > RECOMMENDED_CHARACTERS && (
-                <span className="text-green-600 ml-1">(Siap checkout!)</span>
-              )}
-            </span>
-          </div>
-
-          <Progress
-            value={progressValue}
-            className={`h-2 ${hasMinContent ? "bg-green-100" : "bg-gray-100"}`}
-          />
-
-          <p className="text-xs text-gray-500 mt-2">{getProgressMessage()}</p>
         </div>
 
         {/* ✅ Info tambahan untuk laporan panjang */}

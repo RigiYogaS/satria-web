@@ -30,7 +30,7 @@ model Users {
 
 model Absensi {
   id_absensi      Int           @id @default(autoincrement())
-  user_id         Int
+  user_id         Int   
   tanggal         DateTime      @db.Date
   waktu           DateTime      @default(now())
   ip_address      String?

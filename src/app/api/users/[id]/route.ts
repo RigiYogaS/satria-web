@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient();
 
 // GET /api/users/[id] - Get user by ID
 export async function GET(
@@ -39,6 +37,7 @@ export async function GET(
           take: 10,
         },
       },
+      
     });
 
     if (!user) {

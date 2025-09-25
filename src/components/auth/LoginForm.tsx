@@ -8,6 +8,7 @@ import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -70,11 +71,11 @@ const LoginForm = () => {
     setMessage("");
 
     try {
-      // Validasi password format sebelum submit
       const passwordValidationErrors = validatePassword(formData.password);
       if (passwordValidationErrors.length > 0) {
         setMessage("Password tidak memenuhi format yang benar");
         setPasswordErrors(passwordValidationErrors);
+        setLoading(false);
         return;
       }
 
@@ -82,69 +83,33 @@ const LoginForm = () => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
         setMessage("Format email tidak valid");
+        setLoading(false);
         return;
       }
 
       // Validasi field kosong
       if (!formData.email.trim() || !formData.password.trim()) {
         setMessage("Email dan password harus diisi");
+        setLoading(false);
         return;
       }
 
-      console.log("Login attempt:", { ...formData, password: "[HIDDEN]" });
-
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email.toLowerCase().trim(),
-          password: formData.password,
-        }),
+      // Login dengan NextAuth
+      const res = await signIn("credentials", {
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password,
+        redirect: false,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (res?.error) {
+        setMessage("Email atau password salah!");
+      } else if (res?.ok) {
         setMessage("Login berhasil! Mengalihkan ke dashboard...");
-
-        // Store user data di localStorage atau session
-        if (data.user) {
-          localStorage.setItem("user", JSON.stringify(data.user));
-        }
-
-        // Reset form
-        setFormData({
-          email: "",
-          password: "",
-        });
+        setFormData({ email: "", password: "" });
         setPasswordErrors([]);
-
-        // Redirect ke dashboard berdasarkan role
         setTimeout(() => {
-          if (data.user.role === "admin") {
-            router.push("/admin/dashboardAdmin");
-          } else {
-            router.push("/user/dashboardUser");
-          }
-        }, 2000);
-      } else {
-        // Handle berbagai jenis error
-        if (data.needVerification) {
-          setMessage(`${data.error} Mengalihkan ke halaman verifikasi...`);
-          setTimeout(() => {
-            router.push(
-              `/auth/verify-otp?email=${encodeURIComponent(data.email)}`
-            );
-          }, 3000);
-        } else {
-          setMessage(data.error || "Login gagal");
-        }
-
-        if (data.details) {
-          console.error("Error details:", data.details);
-        }
+          router.push("/user-routing/dashboardUser");
+        }, 1000);
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -233,69 +198,6 @@ const LoginForm = () => {
                   Lupa password?
                 </Link>
               </div>
-
-              {/* Password Requirements - hanya show jika user mengetik */}
-              {formData.password && (
-                <div className="text-xs space-y-1 mt-2">
-                  <p className="font-medium text-gray-700">Format Password:</p>
-                  <div className="space-y-1">
-                    <div
-                      className={`flex items-center gap-2 ${
-                        formData.password.length >= 8
-                          ? "text-green-600"
-                          : "text-red-500"
-                      }`}
-                    >
-                      <span>{formData.password.length >= 8 ? "✓" : "✗"}</span>
-                      <span>Minimal 8 karakter</span>
-                    </div>
-                    <div
-                      className={`flex items-center gap-2 ${
-                        /[A-Z]/.test(formData.password)
-                          ? "text-green-600"
-                          : "text-red-500"
-                      }`}
-                    >
-                      <span>{/[A-Z]/.test(formData.password) ? "✓" : "✗"}</span>
-                      <span>Minimal 1 huruf besar</span>
-                    </div>
-                    <div
-                      className={`flex items-center gap-2 ${
-                        /[a-z]/.test(formData.password)
-                          ? "text-green-600"
-                          : "text-red-500"
-                      }`}
-                    >
-                      <span>{/[a-z]/.test(formData.password) ? "✓" : "✗"}</span>
-                      <span>Minimal 1 huruf kecil</span>
-                    </div>
-                    <div
-                      className={`flex items-center gap-2 ${
-                        /[0-9]/.test(formData.password)
-                          ? "text-green-600"
-                          : "text-red-500"
-                      }`}
-                    >
-                      <span>{/[0-9]/.test(formData.password) ? "✓" : "✗"}</span>
-                      <span>Minimal 1 angka</span>
-                    </div>
-                    <div
-                      className={`flex items-center gap-2 ${
-                        /[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
-                          ? "text-green-600"
-                          : "text-red-500"
-                      }`}
-                    >
-                      <span>
-                        {/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
-                          ? "✓"
-                          : "✗"}
-                      </span>
-                      <span>Minimal 1 karakter khusus (!@#$%^&*)</span>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             <Button

@@ -5,9 +5,9 @@ import { Button } from "./ui/button";
 import Link from "next/link";
 import AppSidebarUser from "./app-sidebarUser";
 import AppBreadcrumb from "./AppBreadcrumb";
-import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/router";
-
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 interface User {
   id_user: number;
@@ -15,20 +15,30 @@ interface User {
 }
 
 const DashboardUser = () => {
-  const {user, loading} = useAuth();
+  const { data: session, status } = useSession();
 
-  if (loading) {
+  const router = useRouter();
+
+  useEffect(() => {
+    console.log("Session:", session, "Status:", status);
+    console.log("DashboardUser rendered, session:", session, "status:", status);
+  }, [session, status]);
+
+  if (status === "unauthenticated") {
+    console.log("Redirecting to login, session:", session);
+    router.push("/auth/login");
+    return null;
+  }
+
+  if (status === "loading") {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-400 mx-auto mb-4"></div>
-          <p>Memuat dashboard...</p>
-        </div>
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-navy-500"></div>
       </div>
     );
   }
 
-  if (!user) {
+  if (!session?.user) {
     return null;
   }
 
@@ -41,12 +51,14 @@ const DashboardUser = () => {
           <AppBreadcrumb />
         </div>
         <div className="mt-4">
-          <h1 className="text-3xl font-bold">Selamat datang {user.nama}!</h1>
+          <h1 className="text-3xl font-bold">
+            Selamat datang {session.user.name}!
+          </h1>
           <p className="my-3">
             Jangan lupa melakukan absensi dan upload laporan mingguanmu
           </p>
           <Button asChild className="bg-navy-200 hover:bg-navy-400 mt-2">
-            <Link href={"/user/absensi/hari-ini"}>Absen Disini</Link>
+            <Link href={"/user-routing/absensi/hari-ini"}>Absen Disini</Link>
           </Button>
         </div>
       </main>

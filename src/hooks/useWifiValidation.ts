@@ -144,7 +144,7 @@ export const useWifiValidation = (): WifiValidationResult => {
 
     const interval = setInterval(() => {
       validateWifiConnection();
-    }, 30000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [validateWifiConnection]);

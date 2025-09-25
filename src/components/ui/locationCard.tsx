@@ -1,17 +1,15 @@
 "use client";
 
 import { Clock, MapPin, Wifi, CircleAlert } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface LocationCardProps {
   jamDatang?: string;
   jamKeluar?: string;
   lokasi?: string;
-  ipAddress?: string;
   currentIP?: string;
+  wifiName?: string;
   isCheckedOut?: boolean;
-  latitude?: number;
-  longitude?: number;
-  accuracy?: number;
 }
 
 const LocationCard = ({
@@ -19,12 +17,31 @@ const LocationCard = ({
   jamKeluar = "--.--.--",
   lokasi = "",
   currentIP = "",
+  wifiName: wifiNameProp = "",
   isCheckedOut = false,
-  latitude,
-  longitude,
-  accuracy,
 }: LocationCardProps) => {
-  const isValidNetwork = currentIP === "192.168.200.53";
+  const [wifiName, setWifiName] = useState<string>(wifiNameProp);
+
+  useEffect(() => {
+    if (wifiNameProp) {
+      setWifiName(wifiNameProp);
+      return;
+    }
+    if (!currentIP) {
+      setWifiName("");
+      return;
+    }
+    const fetchWifiName = async () => {
+      try {
+        const res = await fetch(`/api/ip-lokasi?ip=${currentIP}`);
+        const data = await res.json();
+        setWifiName(data.nama_wifi || ""); // <-- akses langsung objek
+      } catch {
+        setWifiName("");
+      }
+    };
+    fetchWifiName();
+  }, [wifiNameProp, currentIP]);
 
   return (
     <div className="bg-white rounded-lg shadow-md border p-6 mx-auto w-full h-[620px] flex flex-col justify-between">
@@ -56,40 +73,29 @@ const LocationCard = ({
         </div>
 
         {/* Lokasi */}
-        <div className="mt-6 flex">
+        <div className="mt-6 flex items-center gap-2">
           <MapPin
             className="text-navy-500 mr-2 mt-0.5 flex-shrink-0"
             size={40}
           />
-          <div>
-            <span className="text-sm text-neutral-400">Lokasi</span>
-            <p className="text-sm text-neutral-700 leading-relaxed">
-              {lokasi || "Kantor Pusat"}
-            </p>
-          </div>
+          <span className="text-sm text-neutral-700 leading-relaxed">
+            {lokasi || "Lokasi tidak tersedia"}
+          </span>
         </div>
 
         {/* Network Info */}
-        <div className="mt-6 flex">
+        <div className="mt-6 flex items-center gap-2">
           <Wifi
-            className={`mr-2 mt-0.5 flex-shrink-0 ${
-              isValidNetwork ? "text-navy-500" : "text-neutral-200"
-            }`}
+            className="mr-2 mt-0.5 flex-shrink-0 text-navy-500" 
             size={40}
           />
-          <div>
-            <span className="text-sm text-neutral-400">Jaringan</span>
-            <p className="text-sm font-mono text-neutral-700 leading-relaxed">
-              {currentIP || "Tidak terdeteksi"}
-            </p>
-            <p
-              className={`text-xs mt-1 ${
-                isValidNetwork ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {isValidNetwork ? "Jaringan kantor" : "Jaringan tidak valid"}
-            </p>
-          </div>
+          <span className="text-sm  text-neutral-700 leading-relaxed">
+            {wifiName ? (
+              <spa>{wifiName}</spa>
+            ) : (
+              <span>Tidak terdeteksi</span>
+            )}
+          </span>
         </div>
       </div>
 

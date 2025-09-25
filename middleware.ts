@@ -3,32 +3,21 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   function middleware(req) {
-    console.log("🛡️ Middleware - Path:", req.nextUrl.pathname);
-    console.log(
-      "🍪 Middleware - Cookies:",
-      req.cookies.getAll().map((c) => c.name)
-    );
-
+    // Log token di server
+    console.log("MIDDLEWARE TOKEN:", req.nextauth.token);
     return NextResponse.next();
   },
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        console.log("🔐 Middleware Auth Check:", {
-          hasToken: !!token,
-          path: req.nextUrl.pathname,
-          tokenSub: token?.sub,
-        });
-
-        // Allow access to auth pages and API routes
+        // Log authorized callback
+        console.log("AUTHORIZED CALLBACK TOKEN:", token, req.nextUrl.pathname);
         if (
           req.nextUrl.pathname.startsWith("/auth") ||
           req.nextUrl.pathname.startsWith("/api/auth")
         ) {
           return true;
         }
-
-        // Require token for protected routes
         return !!token;
       },
     },
