@@ -52,7 +52,7 @@ const AppSidebarUser = () => {
           </div>
 
           {/* ISI SIDEBAR */}
-          <SidebarGroupContent className="mt-3">
+          <SidebarGroupContent className="mt-3 ">
             <SidebarMenu>
               {/* Dashboard */}
               <SidebarMenuItem>
@@ -81,7 +81,7 @@ const AppSidebarUser = () => {
                 >
                   <Collapsible.Trigger asChild>
                     <SidebarMenuButton
-                      className={`w-full group-data-[collapsible=icon]:justify-center transition-colors ${
+                      className={`w-2/3 group-data-[collapsible=icon]:justify-center transition-colors ${
                         absensiOpen
                           ? "text-neutral-500 hover:text-neutral-600"
                           : "text-navy-700 hover:text-navy-900"
@@ -191,9 +191,9 @@ const AppSidebarUser = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        <Button onClick={logout} variant="outline" className="w-full">
-          <LogOut className="group-data-[collapsible=icon]:block group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5 hidden" />
+      <SidebarFooter className="flex justify-center">
+        <Button onClick={logout} variant="outline" className="w-2/3 flex mx-auto bg-red-200 text-white hover:bg-red-400 hover:text-white">
+          <LogOut className="group-data-[collapsible=icon]:block group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5 " />
           <span className="group-data-[collapsible=icon]:hidden">Logout</span>
         </Button>
       </SidebarFooter>

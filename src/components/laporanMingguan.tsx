@@ -31,14 +31,19 @@ const LaporanMingguanPage = () => {
         const res = await fetch("/api/laporan");
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
+          const userId = session?.user?.id;
           setData(
-            json.data.map((item: any) => ({
-              id_laporan: item.id_laporan,
-              judul: item.judul,
-              tanggal_upload: item.tanggal_upload,
-              nilai_admin: item.nilai_admin,
-              file_path: item.file_path, // tambahkan ini!
-            }))
+            json.data
+              .filter(
+                (item: any) => item.user_id?.toString() === userId?.toString()
+              ) // <-- filter sesuai user login
+              .map((item: any) => ({
+                id_laporan: item.id_laporan,
+                judul: item.judul,
+                tanggal_upload: item.tanggal_upload,
+                nilai_admin: item.nilai_admin,
+                file_path: item.file_path,
+              }))
           );
         } else {
           setData([]);
@@ -49,8 +54,8 @@ const LaporanMingguanPage = () => {
         setLoading(false);
       }
     };
-    fetchLaporan();
-  }, []);
+    if (session?.user?.id) fetchLaporan();
+  }, [session]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -106,20 +111,25 @@ const LaporanMingguanPage = () => {
   };
 
   return (
-    <SidebarProvider className="font-montserrat">
+    <SidebarProvider className="font-montserrat bg-neutral-50">
       <AppSidebarUser />
-      <main className="flex-1 p-6">
-        <div className="flex items-center gap-3 mb-6">
+      <main className="flex-1 md:p-6 p-2">
+        <div className="flex items-center gap-3 md:mb-6 mb-3">
           <SidebarTrigger />
           <AppBreadcrumb />
         </div>
         <div className="mt-4">
-          <h1 className="text-3xl font-bold mb-8">Laporan Mingguan</h1>
+          <h1 className="md:text-3xl text-2xl font-bold mb-8">
+            Laporan Mingguan
+          </h1>
           {/* Container Input & Search */}
-          <div className="flex justify-between gap-4 mb-6 w-full">
-            <div className="flex flex-col max-w-xs gap-2 ">
-              <div className="flex">
-                <Label htmlFor="judul" className="mb-2 w-2/3">
+          <div className="flex flex-col md:flex-row justify-between gap-4 mb-6 w-full">
+            <div className="flex flex-col max-w-xs gap-2">
+              <div className="flex flex-col md:flex-row gap-2">
+                <Label
+                  htmlFor="judul"
+                  className="md:text-base text-sm mb-2 md:w-2/3 w-full"
+                >
                   Judul Laporan
                 </Label>
                 <Input
@@ -129,11 +139,14 @@ const LaporanMingguanPage = () => {
                   value={judul}
                   onChange={(e) => setJudul(e.target.value)}
                   disabled={uploading}
-                  className="mb-2"
+                  className="mb-2 md:text-sm text-xs"
                 />
               </div>
-              <div className="flex">
-                <Label htmlFor="file" className="mb-2 w-2/3">
+              <div className="flex flex-col md:flex-row gap-2">
+                <Label
+                  htmlFor="file"
+                  className="md:text-base text-sm mb-2 md:w-2/3 w-full"
+                >
                   Masukkan File
                 </Label>
                 <Input
@@ -141,11 +154,12 @@ const LaporanMingguanPage = () => {
                   type="file"
                   onChange={handleFileChange}
                   disabled={uploading}
+                  className="md:text-sm text-xs"
                 />
               </div>
               <Button
                 size="default"
-                className="bg-navy-200 hover:bg-navy-500 mt-2"
+                className="bg-navy-200 hover:bg-navy-500 mt-2 md:text-base text-sm"
                 onClick={handleUpload}
                 disabled={!file || !judul.trim() || uploading}
               >
@@ -156,12 +170,12 @@ const LaporanMingguanPage = () => {
               <Label htmlFor="search" className="mb-2 invisible">
                 Cari Laporan
               </Label>
-              <div className="relative">
+              <div className="relative w-full">
                 <Input
                   id="search"
                   type="search"
                   placeholder="Cari Laporan..."
-                  className="pr-10"
+                  className="pr-10 md:text-sm text-xs"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />

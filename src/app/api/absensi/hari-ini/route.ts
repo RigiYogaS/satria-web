@@ -56,8 +56,8 @@ export async function GET() {
           accuracy: absensi.accuracy,
           checkoutTime: absensi.jam_checkout,
           laporanHarian: absensi.laporan_harian,
-          ipAddress: absensi.ip_address, 
-          namaWifi, 
+          ipAddress: absensi.ip_address,
+          namaWifi,
         },
       },
     });
@@ -67,4 +67,35 @@ export async function GET() {
       { status: 500 }
     );
   }
+}
+
+export async function POST(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const userId = parseInt(session.user.id);
+  const body = await req.json();
+
+  // Ambil ipAddress dari body
+  const { latitude, longitude, accuracy, ipAddress } = body;
+
+  const now = new Date();
+  const tanggal = now.toISOString().slice(0, 10); 
+
+  // Simpan ke database
+  await prisma.absensi.create({
+    data: {
+      user_id: userId,
+      waktu: now,
+      tanggal,
+      status: "Hadir",
+      latitude,
+      longitude,
+      accuracy,
+      ip_address: ipAddress, 
+    },
+  });
+
+  return NextResponse.json({ success: true });
 }

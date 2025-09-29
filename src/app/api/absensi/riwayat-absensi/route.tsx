@@ -27,7 +27,6 @@ export async function GET(req: NextRequest) {
     };
 
     if (startDate && endDate) {
-      // Filter dari jam 00:00:00 startDate sampai < 00:00:00 hari setelah endDate
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setDate(end.getDate() + 1); // hari setelah endDate

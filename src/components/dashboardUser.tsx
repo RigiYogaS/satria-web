@@ -43,7 +43,7 @@ const DashboardUser = () => {
   }
 
   return (
-    <SidebarProvider className="font-montserrat">
+    <SidebarProvider className="font-montserrat bg-neutral-50">
       <AppSidebarUser />
       <main className="flex-1 p-6">
         <div className="flex items-center gap-3 mb-6">
@@ -51,10 +51,10 @@ const DashboardUser = () => {
           <AppBreadcrumb />
         </div>
         <div className="mt-4">
-          <h1 className="text-3xl font-bold">
+          <h1 className="md:text-3xl text-2xl font-bold">
             Selamat datang {session.user.name}!
           </h1>
-          <p className="my-3">
+          <p className="my-3 md:text-base text-sm">
             Jangan lupa melakukan absensi dan upload laporan mingguanmu
           </p>
           <Button asChild className="bg-navy-200 hover:bg-navy-400 mt-2">

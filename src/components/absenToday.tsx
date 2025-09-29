@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useSession } from "next-auth/react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { AbsenData } from "@/types/absen";
 
@@ -108,7 +109,6 @@ const AbsenToday = () => {
   const handleCheckIn = async (absenData: AbsenData) => {
     setLoading(true);
     try {
-      // POST ke API
       const res = await fetch("/api/absensi", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -122,6 +122,7 @@ const AbsenToday = () => {
           longitude: absenData.longitude,
           accuracy: absenData.accuracy,
           lokasi: absenData.lokasi,
+          ipAddress: absenData.ipAddress,
         }),
       });
       const result = await res.json();
@@ -184,7 +185,7 @@ const AbsenToday = () => {
   };
 
   return (
-    <SidebarProvider className="font-montserrat">
+    <SidebarProvider className="font-montserrat bg-neutral-50">
       <AppSidebarUser />
       <main className="flex-1 p-6">
         <div className="flex items-center gap-3 mb-6">
@@ -192,15 +193,15 @@ const AbsenToday = () => {
           <AppBreadcrumb />
         </div>
 
-        <div className="mt-4 space-y-6">
+        <div className="mt-4 space-y-6 ">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Absensi Hari Ini</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">Absensi Hari Ini</h1>
             <div className="flex items-start gap-3 p-4 bg-amber-100 border border-amber-200 rounded-lg">
               <AlertCircle
-                className="text-amber-700 mt-0.5 flex-shrink-0"
-                size={20}
+                className="text-amber-700 mt-0.5 flex-shrink-0 md:size-6 size-4"
+                
               />
-              <p className="text-sm text-amber-700">
+              <p className="md:text-sm text-amber-700 text-xs">
                 Absensi hanya dapat dilakukan melalui jaringan WiFi kantor. Jika
                 menggunakan jaringan luar (seperti Telkomsel, Indosat, atau
                 provider lain), maka absensi tidak akan tercatat
@@ -211,8 +212,12 @@ const AbsenToday = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
             <div className="w-full h-full">
               {isLoadingAbsenStatus ? (
-                <div className="bg-white rounded-lg shadow p-6 text-center text-gray-400">
-                  Memuat status absensi...
+                <div className="bg-white rounded-lg shadow p-6">
+                  <Skeleton className="h-8 w-1/2 mb-4" />
+                  <Skeleton className="h-6 w-full mb-2" />
+                  <Skeleton className="h-10 w-full mb-2" />
+                  <Skeleton className="h-10 w-full mb-2" />
+                  <Skeleton className="h-12 w-full mt-4" />
                 </div>
               ) : (
                 <AbsenCard
@@ -233,7 +238,6 @@ const AbsenToday = () => {
               <div className="w-full h-full">
                 <StatusAbsen
                   absenData={absenDataFromAPI}
-                  wifiName={wifiName}
                   visible={!!absenDataFromAPI}
                   checkOutTime={checkOutTime}
                   isCheckedOut={isCheckedOut}

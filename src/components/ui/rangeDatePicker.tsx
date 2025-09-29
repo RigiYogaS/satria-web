@@ -62,7 +62,7 @@ export function RangeDatePicker({
           numberOfMonths={2}
           selected={date}
           onSelect={handleSelect}
-          className="rounded-lg border shadow-sm"
+          className="rounded-lg border shadow-sm text-xs md:text-sm"
         />
       </PopoverContent>
     </Popover>

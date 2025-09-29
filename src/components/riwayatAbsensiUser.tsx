@@ -14,7 +14,7 @@ import { useSession } from "next-auth/react";
 import { addDays, subDays } from "date-fns";
 
 const DEFAULT_RANGE = {
-  from: subDays(new Date(), 6), 
+  from: subDays(new Date(), 6),
   to: new Date(),
 };
 
@@ -44,7 +44,6 @@ const RiwayatAbsensiPage = () => {
       if (startDate && endDate) {
         url += `&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`;
       }
-
       const response = await fetch(url);
       const result = await response.json();
 
@@ -69,28 +68,30 @@ const RiwayatAbsensiPage = () => {
   };
 
   return (
-    <SidebarProvider className="font-montserrat">
+    <SidebarProvider className="font-montserrat bg-neutral-50">
       <AppSidebarUser />
-      <main className="flex-1 p-6">
-        <div className="flex items-center gap-3 mb-6">
+      <main className="flex-1 md:p-6 p-2">
+        <div className="flex items-center gap-3 md:mb-6 mb-3">
           <SidebarTrigger />
           <AppBreadcrumb />
         </div>
 
         {/* Header */}
-        <div className="mt-4">
-          <h1 className="text-3xl font-bold mb-2">Riwayat Absensi</h1>
-          <p className="text-gray-600">
+        <div className="mt-4 md:mt-10 w-full">
+          <h1 className="md:text-3xl text-2xl font-bold mb-2 md:mb-4">
+            Riwayat Absensi
+          </h1>
+          <p className="md:text-base text-sm text-gray-600 flex">
             Lihat riwayat kehadiran Anda dengan filter tanggal
           </p>
         </div>
 
         {/* Filter Section */}
-        <div className="mt-6 flex flex-col gap-4 p-4 bg-gray-50 rounded-lg border">
-          <Label className="text-sm font-medium">
+        <div className="mt-6 flex flex-col md:flex-col gap-4 md:p-4 p-2 bg-gray-50 rounded-lg border">
+          <Label className="md:text-base text-sm font-medium">
             Cari Riwayat Absensi dengan rentang tanggal
           </Label>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
             <RangeDatePicker
               onDateChange={handleDateRangeChange}
               selectedRange={dateRange}
@@ -98,7 +99,7 @@ const RiwayatAbsensiPage = () => {
             <Button
               variant="outline"
               onClick={handleResetFilter}
-              className="px-4 py-2"
+              className="md:px-4 md:py-2 px-2 py-1"
             >
               Reset Filter
             </Button>
@@ -106,8 +107,12 @@ const RiwayatAbsensiPage = () => {
         </div>
 
         {/* Data Table */}
-        <div className="mt-6">
-          <DataTableRiwayatAbsen columns={columns} data={data} loading={loading} />
+        <div className="mt-6 overflow-x-auto">
+          <DataTableRiwayatAbsen
+            columns={columns}
+            data={data}
+            loading={loading}
+          />
         </div>
       </main>
     </SidebarProvider>

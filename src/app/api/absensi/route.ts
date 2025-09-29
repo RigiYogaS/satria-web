@@ -25,7 +25,7 @@ function getTodayRangeUTC() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { type, latitude, longitude, accuracy, laporanHarian } = body;
+    const { type, latitude, longitude, accuracy, laporanHarian, ipAddress } = body;
 
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
           longitude: longitude ? parseFloat(longitude.toString()) : null,
           accuracy: accuracy ? parseFloat(accuracy.toString()) : null,
           status: "Hadir",
-          ip_address: "",
+          ip_address: ipAddress || "", 
         },
       });
 

@@ -75,7 +75,7 @@ const RiwayatCutiPage = () => {
   };
 
   return (
-    <SidebarProvider className="font-montserrat">
+    <SidebarProvider className="font-montserra bg-neutral-50">
       <AppSidebarUser />
       <main className="flex-1 p-6">
         <div className="flex items-center gap-3 mb-6">

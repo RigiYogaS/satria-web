@@ -44,46 +44,66 @@ export const useWifiValidation = (): WifiValidationResult => {
       }
 
       // Method 2: WebRTC
-      return new Promise((resolve) => {
-        const pc = new RTCPeerConnection({
-          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      try {
+        const webrtcIP = await new Promise<string | null>((resolve) => {
+          const pc = new RTCPeerConnection({
+            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+          });
+
+          pc.createDataChannel("");
+
+          pc.onicecandidate = (ice) => {
+            if (!ice || !ice.candidate || !ice.candidate.candidate) return;
+
+            const myIP =
+              /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/.exec(
+                ice.candidate.candidate
+              );
+
+            if (myIP && myIP[1]) {
+              const ip = myIP[1];
+              console.log("🌐 WebRTC Local IP:", ip);
+
+              if (
+                ip.startsWith("192.168.") ||
+                ip.startsWith("10.") ||
+                /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip)
+              ) {
+                pc.close();
+                resolve(ip);
+                return;
+              }
+            }
+          };
+
+          pc.createOffer().then((offer) => pc.setLocalDescription(offer));
+
+          setTimeout(() => {
+            pc.close();
+            resolve(null);
+          }, 3000);
         });
 
-        pc.createDataChannel("");
+        if (webrtcIP) return webrtcIP;
+      } catch (err) {
+        console.warn("WebRTC IP failed:", err);
+      }
 
-        pc.onicecandidate = (ice) => {
-          if (!ice || !ice.candidate || !ice.candidate.candidate) return;
+      // Method 3: ipify (public IP)
+      try {
+        const ipifyResponse = await fetch("https://api.ipify.org?format=json");
+        const ipifyData = await ipifyResponse.json();
+        if (ipifyData.ip) {
+          console.log("🌎 Public IP dari ipify:", ipifyData.ip);
+          return ipifyData.ip;
+        }
+      } catch (err) {
+        console.warn("ipify failed:", err);
+      }
 
-          const myIP =
-            /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/.exec(
-              ice.candidate.candidate
-            );
-
-          if (myIP && myIP[1]) {
-            const ip = myIP[1];
-            console.log("🌐 WebRTC Local IP:", ip);
-
-            if (
-              ip.startsWith("192.168.") ||
-              ip.startsWith("10.") ||
-              /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip)
-            ) {
-              pc.close();
-              resolve(ip);
-              return;
-            }
-          }
-        };
-
-        pc.createOffer().then((offer) => pc.setLocalDescription(offer));
-
-        setTimeout(() => {
-          pc.close();
-          resolve(null);
-        }, 3000);
-      });
+      return null;
     } catch (err) {
-      console.error("Error getting local IP:", err);
+      console.error("Error getting IP:", err);
       return null;
     }
   };

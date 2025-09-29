@@ -16,6 +16,7 @@ import { useAbsenLogic } from "@/hooks/useAbsenLogic";
 import AlertUsage from "./alertUsage";
 import { LaporanHarianHandle } from "./laporanHarian";
 import { AbsenData } from "@/types/absen";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AbsenCardProps {
   onCheckIn?: (data: AbsenData) => Promise<void>;
@@ -33,8 +34,6 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
   onCheckOut,
   isCheckedIn = false,
   isCheckedOut = false,
-  checkInTime = "",
-  laporanRef,
   laporanComplete = false,
   loading = false,
 }) => {
@@ -80,8 +79,6 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
     setShowWifiAlert,
     setPendingAction,
     setAlertAccuracy,
-    proceedWithCheckIn,
-    proceedWithCheckOut,
   } = useAbsenLogic();
 
   // Mount and timer effects
@@ -181,13 +178,13 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
     // Pastikan jamKeluar selalu ada (walau kosong)
     const absenData: AbsenData = {
       jamDatang: currentTime ? currentTime.toISOString() : "",
-      jamKeluar : currentTime ? currentTime.toISOString() : "",
+      jamKeluar: currentTime ? currentTime.toISOString() : "",
       tanggal: currentTime ? currentTime.toISOString().slice(0, 10) : "",
-      lokasi: realLocationName, 
+      lokasi: realLocationName,
       latitude: location.latitude,
       longitude: location.longitude,
       accuracy: location.accuracy,
-      ipAddress: currentIP || "", 
+      ipAddress: currentIP || "",
     };
 
     await onCheckIn?.(absenData);
@@ -300,7 +297,6 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
       locationCache.current[key] = locationName;
       return locationName;
     } catch (error) {
-      // Fallback: Check if within known office coordinates
       const knownOffices = [
         {
           name: "Mabes Polri",
@@ -323,7 +319,9 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
         }
       }
 
-      const fallbackName = `Koordinat: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+      const fallbackName = `Koordinat: ${latitude.toFixed(
+        6
+      )}, ${longitude.toFixed(6)}`;
       locationCache.current[key] = fallbackName;
       return fallbackName;
     }
@@ -348,7 +346,7 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
     lat2: number,
     lon2: number
   ): number => {
-    const R = 6371e3; // Earth's radius in meters
+    const R = 6371e3;
     const φ1 = (lat1 * Math.PI) / 180;
     const φ2 = (lat2 * Math.PI) / 180;
     const Δφ = ((lat2 - lat1) * Math.PI) / 180;
@@ -362,16 +360,17 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
     return R * c;
   };
 
-  if (!mounted) {
+  if (loading) {
     return (
       <div className="bg-white w-full max-w-md mx-auto p-6 rounded-lg shadow-md flex flex-col gap-6">
         <h2 className="text-2xl font-bold mb-4 text-navy-500 text-center">
           Absen Kehadiran
         </h2>
-        <div className="animate-pulse">
-          <div className="h-20 bg-gray-200 rounded mb-4"></div>
-          <div className="h-10 bg-gray-200 rounded"></div>
-        </div>
+        <Skeleton className="h-20 mb-4" />
+        <Skeleton className="h-10" />
+        <Skeleton className="h-10 mt-4" />
+        <Skeleton className="h-10 mt-4" />
+        <Skeleton className="h-12 mt-6" />
       </div>
     );
   }
@@ -384,32 +383,34 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
     >
       <div className="flex-1 overflow-y-auto">
         <div className="text-center">
-          <h2 className="text-3xl font-bold mb-2 text-navy-500">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2 text-navy-500">
             {cardState === "initial" && "Absen Kehadiran"}
             {cardState === "checkedIn" && "Absen Pulang"}
             {cardState === "checkedOut" && "Selesai Absensi"}
           </h2>
         </div>
 
-        <div className="w-full grid grid-cols-2 gap-4 mt-4">
+        <div className="w-full grid grid-cols-2 gap-8 mt-4">
           <div className="flex items-center p-3">
-            <Clock7 className="text-navy-500" size={44} />
+            <Clock7 className="text-navy-500 md:size-10 size-6 hidden md:block" />
             <div className="flex flex-col mx-2">
-              <span className="text-sm text-neutral-400">Jam</span>
-              <p className="text-xl font-semibold text-navy-500 text-center">
+              <span className="md:text-sm text-xs text-neutral-400">Jam</span>
+              <p className="md:text-xl text-lg font-semibold text-navy-500 text-center">
                 {mounted && currentTime && !isCheckedOut
                   ? formatTime(currentTime)
                   : isCheckedOut
                   ? "Berhenti"
-                  : "--:--:--"}
+                  : "--:--"}
               </p>
             </div>
           </div>
           <div className="flex items-center p-3">
-            <Calendar className="text-navy-500" size={44} />
+            <Calendar className="text-navy-500 md:size-10 size-6 hidden md:block" />
             <div className="flex flex-col mx-2">
-              <span className="text-sm text-neutral-400">Tanggal</span>
-              <p className="text-xl font-semibold text-navy-500 text-center">
+              <span className="md:text-sm text-xs text-neutral-400">
+                Tanggal
+              </span>
+              <p className="md:text-xl text-lg font-semibold text-navy-500 text-center">
                 {mounted && currentTime
                   ? formatDate(currentTime)
                   : "--/--/----"}
@@ -419,9 +420,9 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
         </div>
 
         {!isCheckedOut && (
-          <div className="flex items-center gap-2 text-sm text-gray-600 p-3 bg-blue-50 rounded-lg mt-4">
-            <MapPin size={16} className="text-blue-600 flex-shrink-0" />
-            <span>
+          <div className="flex items-center gap-2 md:text-sm text-xs text-gray-600 p-3 bg-blue-50 rounded-lg mt-4">
+            <MapPin className="text-blue-600 flex-shrink-0 md:size-6 size-4" />
+            <span className="md:text-sm text-xs">
               Pastikan Anda berada di lokasi kantor dan terhubung Wi-Fi kantor
             </span>
           </div>
@@ -430,8 +431,8 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
         {!isCheckedOut && (
           <div className="bg-gray-50 p-4 rounded-lg mt-4">
             <div className="flex items-center gap-2 mb-3">
-              <Navigation size={16} className="text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">
+              <Navigation className="text-gray-500 md:size-6 size-4" />
+              <span className="md:text-sm text-xs font-medium text-gray-700">
                 Status Lokasi
               </span>
             </div>
@@ -439,18 +440,19 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
             {locationLoading && (
               <div className="flex items-center gap-3 text-blue-600">
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                <span className="text-sm">Mendapatkan lokasi GPS...</span>
+                <span className="md:text-sm text-xs">
+                  Mendapatkan lokasi GPS...
+                </span>
               </div>
             )}
 
             {locationError && (
               <div className="text-red-600">
-                <p className="text-sm">{locationError}</p>
+                <p className="md:text-sm text-xs">{locationError}</p>
                 <Button
                   onClick={getCurrentLocation}
                   variant="outline"
-                  size="sm"
-                  className="mt-2"
+                  className="mt-2 md:text-sm text-xs"
                 >
                   Coba Lagi
                 </Button>
@@ -459,10 +461,10 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
 
             {location && (
               <div className="text-green-600">
-                <p className="text-sm">
+                <p className="md:text-sm text-xs">
                   ✅ GPS Ready - Akurasi ±{Math.round(location.accuracy)}m
                 </p>
-                <p className="text-xs text-gray-600 mt-1">
+                <p className="md:text-xs text-xs text-gray-600 mt-1">
                   Lokasi: {getLocationName()}
                 </p>
               </div>
@@ -478,7 +480,7 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
               ) : (
                 <WifiOff size={16} className="text-red-500" />
               )}
-              <span className="text-sm font-medium text-gray-700">
+              <span className="md:text-sm text-xs font-medium text-gray-700">
                 Status Wi-Fi Kantor
               </span>
             </div>
@@ -486,14 +488,16 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
             {wifiValidationLoading ? (
               <div className="flex items-center gap-3 text-blue-600">
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                <span className="text-sm">Memvalidasi koneksi Wi-Fi...</span>
+                <span className="md:text-sm text-xs">
+                  Memvalidasi koneksi Wi-Fi...
+                </span>
               </div>
             ) : (
               <div className="space-y-2">
                 <div
                   className={isValidWifi ? "text-green-600" : "text-red-600"}
                 >
-                  <p className="text-sm font-medium">
+                  <p className="md:text-sm text-xs font-medium">
                     {isValidWifi ? "✅" : "❌"}{" "}
                     {connectedWifiName || "Tidak terhubung ke Wi-Fi kantor"}
                   </p>
@@ -529,7 +533,7 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
               : "bg-gray-400 cursor-not-allowed"
           } disabled:bg-gray-300 disabled:cursor-not-allowed`}
         >
-          <div className="flex items-center gap-2 justify-center">
+          <div className="flex md:text-base text-sm  items-center gap-2 justify-center">
             {isProcessing
               ? "Memproses..."
               : wifiValidationLoading

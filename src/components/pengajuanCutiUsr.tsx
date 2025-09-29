@@ -85,7 +85,7 @@ const PengajuanCutiPage = () => {
   };
 
   return (
-    <SidebarProvider className="font-montserrat">
+    <SidebarProvider className="font-montserrat bg-neutral-50">
       <AppSidebarUser />
       <main className="flex-1 p-6">
         <div className="flex items-center gap-3 mb-6">

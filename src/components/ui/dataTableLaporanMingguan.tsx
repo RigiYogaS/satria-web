@@ -49,13 +49,16 @@ export function DataTableLaporanMingguan<TData, TValue>({
 
   if (loading) {
     return (
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border overflow-x-auto">
+        <Table className="text-xs md:text-sm min-w-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    className="text-xs md:text-sm text-center"
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -71,7 +74,10 @@ export function DataTableLaporanMingguan<TData, TValue>({
             {[...Array(5)].map((_, index) => (
               <TableRow key={index}>
                 {columns.map((_, cellIndex) => (
-                  <TableCell key={cellIndex} className="h-16">
+                  <TableCell
+                    key={cellIndex}
+                    className="h-16 text-xs md:text-sm text-center"
+                  >
                     <div className="h-40 text-center align-middle"></div>
                   </TableCell>
                 ))}
@@ -92,14 +98,17 @@ export function DataTableLaporanMingguan<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
-        <Table className="min-w-full">
+      <div className="rounded-md border overflow-x-auto">
+        <Table className="min-w-full text-xs md:text-sm">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      className="text-xs md:text-sm text-center"
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -117,7 +126,10 @@ export function DataTableLaporanMingguan<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell
+                      key={cell.id}
+                      className="text-xs md:text-sm text-center"
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -130,7 +142,7 @@ export function DataTableLaporanMingguan<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-40 text-center align-middle" 
+                  className="h-40 text-center align-middle text-xs md:text-sm"
                 >
                   Tidak ada data laporan.
                 </TableCell>
@@ -141,7 +153,7 @@ export function DataTableLaporanMingguan<TData, TValue>({
       </div>
 
       {/* Pagination Info */}
-      <div className="flex items-center justify-between text-sm text-gray-500">
+      <div className="flex flex-col md:flex-row items-center justify-between text-xs md:text-sm text-gray-500 gap-2">
         <div>{`Showing ${from} to ${to} of ${totalRows} entries`}</div>
         <div className="flex items-center space-x-2">
           <Button
@@ -149,15 +161,17 @@ export function DataTableLaporanMingguan<TData, TValue>({
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
+            className="text-xs md:text-sm"
           >
             Previous
           </Button>
-          <span>{pageIndex + 1}</span>
+          <span className="text-xs md:text-sm">{pageIndex + 1}</span>
           <Button
             variant="outline"
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
+            className="text-xs md:text-sm"
           >
             Next
           </Button>
@@ -170,7 +184,7 @@ export function DataTableLaporanMingguan<TData, TValue>({
 export type LaporanMingguan = {
   id_laporan: number;
   judul: string;
-  tanggal_upload: string; 
+  tanggal_upload: string;
   nilai_admin?: string | null;
   file_path?: string;
 };

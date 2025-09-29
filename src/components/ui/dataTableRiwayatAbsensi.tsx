@@ -54,13 +54,13 @@ export function DataTableRiwayatAbsen<TData, TValue>({
 
   if (loading) {
     return (
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border overflow-x-auto">
+        <Table className="text-xs md:text-sm ">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="text-xs md:text-sm text-center">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -76,7 +76,10 @@ export function DataTableRiwayatAbsen<TData, TValue>({
             {[...Array(5)].map((_, index) => (
               <TableRow key={index}>
                 {columns.map((_, cellIndex) => (
-                  <TableCell key={cellIndex} className="h-16">
+                  <TableCell
+                    key={cellIndex}
+                    className="h-16 text-xs md:text-sm text-center"
+                  >
                     <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
                   </TableCell>
                 ))}
@@ -90,14 +93,14 @@ export function DataTableRiwayatAbsen<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border overflow-x-auto">
+        <Table className="text-xs md:text-sm">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className="text-xs md:text-sm text-center">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -118,7 +121,7 @@ export function DataTableRiwayatAbsen<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="text-xs md:text-sm text-center">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -131,7 +134,7 @@ export function DataTableRiwayatAbsen<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-24 text-center text-xs md:text-sm"
                 >
                   Tidak ada data absensi.
                 </TableCell>
@@ -142,30 +145,27 @@ export function DataTableRiwayatAbsen<TData, TValue>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between space-x-2">
-        {/* Tambahkan sebelum tombol Previous/Next */}
-        {(() => {
-          return (
-            <div className="text-sm text-muted-foreground">
-              {`Showing ${from} to ${to} of ${totalRows} entries`}
-            </div>
-          );
-        })()}
+      <div className="flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
+        <div className="text-xs md:text-sm text-muted-foreground">
+          {`Showing ${from} to ${to} of ${totalRows} entries`}
+        </div>
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
+            className="text-xs md:text-sm"
           >
             Previous
           </Button>
-          <span>{pageIndex + 1}</span>
+          <span className="text-xs md:text-sm">{pageIndex + 1}</span>
           <Button
             variant="outline"
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
+            className="text-xs md:text-sm"
           >
             Next
           </Button>

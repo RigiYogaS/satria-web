@@ -12,7 +12,6 @@ interface AbsenData {
   longitude: number;
   accuracy: number;
   ipAddress?: string;
-  wifiName?: string;
 }
 
 interface StatusAbsenHandle {
@@ -25,18 +24,11 @@ interface StatusAbsenProps {
   isCheckedOut?: boolean;
   absenData?: AbsenData | null;
   visible?: boolean;
-  wifiName?: string; // tambahkan ini
 }
 
 const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
   (
-    {
-      checkOutTime = "00.00 WIB",
-      isCheckedOut = false,
-      absenData,
-      visible,
-      wifiName,
-    }, // tambahkan wifiName
+    { checkOutTime = "00.00 WIB", isCheckedOut = false, absenData, visible },
     ref
   ) => {
     const [currentCheckOutTime, setCurrentCheckOutTime] =
@@ -46,6 +38,7 @@ const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
     const [checkoutLocationName, setCheckoutLocationName] =
       useState<string>("");
     const [locationName, setLocationName] = useState<string>("");
+    const [wifiName, setWifiName] = useState<string>("");
 
     useImperativeHandle(ref, () => ({
       triggerCheckIn: (data: AbsenData) => {
@@ -88,6 +81,24 @@ const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
       }
     }, [absenData?.latitude, absenData?.longitude]);
 
+    // Ambil nama wifi dari ipAddress via API eksternal
+    useEffect(() => {
+      if (absenData?.ipAddress) {
+        const fetchWifiName = async () => {
+          try {
+            const res = await fetch(`/api/ip-lokasi?ip=${absenData.ipAddress}`);
+            const data = await res.json();
+            setWifiName(data.nama_wifi || "");
+          } catch {
+            setWifiName("");
+          }
+        };
+        fetchWifiName();
+      } else {
+        setWifiName("");
+      }
+    }, [absenData?.ipAddress]);
+
     async function getRealLocationName(
       latitude: number,
       longitude: number
@@ -112,13 +123,16 @@ const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
       return null;
     }
 
+    const currentIP = absenData?.ipAddress || "";
+    console.log("IP address dikirim ke backend:", currentIP);
+
     return (
       <LocationCard
         jamDatang={absenData?.jamDatang}
         jamKeluar={absenData?.jamKeluar}
         lokasi={locationName}
         currentIP={absenData?.ipAddress}
-        wifiName={wifiName} // <-- ini penting!
+        wifiName={wifiName}
       />
     );
   }

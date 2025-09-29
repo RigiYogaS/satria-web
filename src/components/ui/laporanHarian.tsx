@@ -100,9 +100,8 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
         }`}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <FileText className="text-navy-500" size={24} />
-          <h2 className="text-xl font-bold text-navy-500">Laporan Harian</h2>
+        <div className="flex items-center justify-center gap-3 mb-4 text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-navy-500">Laporan Harian</h2>
         </div>
 
         {/* Warning Info */}
@@ -112,15 +111,14 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
             size={16}
           />
           <div className="text-sm text-amber-600">
-            <p className="font-medium mb-1">Wajib diisi sebelum check out</p>
-            <p>
+            <p className="md:text-sm text-xs mb-2">Wajib diisi sebelum check out</p>
+            <p className="md:text-sm text-xs mb-1">
               Minimal {MIN_CHARACTERS} karakter. Deskripsikan aktivitas dan
               pencapaian Anda hari ini.
             </p>
           </div>
         </div>
 
-        {/* Textarea - tinggi otomatis untuk text panjang */}
         <div className="mb-4">
           <textarea
             value={laporan}
@@ -129,7 +127,7 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
             onBlur={() => setIsFocused(false)}
             disabled={disabled}
             placeholder="Tulis laporan harian Anda di sini..."
-            className={`w-full min-h-[8rem] max-h-[16rem] p-4 border rounded-lg resize-y transition-all duration-200 placeholder:text-sm ${
+            className={`w-full min-h-[8rem] max-h-[16rem] p-4 border rounded-lg resize-y transition-all duration-200 md:text-sm text-xs placeholder:text-xs md:placeholder:text-sm ${
               disabled
                 ? "bg-gray-100 cursor-not-allowed opacity-60"
                 : isFocused
@@ -148,7 +146,7 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
           <div className="flex items-center gap-4">
             {/* Character Count */}
             <span
-              className={`font-medium ${
+              className={`md:text-sm text-xs ${
                 hasMinContent
                   ? "text-green-600"
                   : trimmedCharCount > 0
@@ -159,9 +157,6 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
               {trimmedCharCount}/{MIN_CHARACTERS} karakter minimal
             </span>
 
-            <span className="text-gray-400 text-xs">
-              {charCount} karakter total
-            </span>
           </div>
 
           {/* Status Badge */}
