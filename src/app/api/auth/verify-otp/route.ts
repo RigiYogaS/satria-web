@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { sendWelcomeEmail } from "@/lib/email";
-
-const prisma = new PrismaClient();
 
 // POST /api/auth/verify-otp - Verifikasi OTP
 export async function POST(request: NextRequest) {

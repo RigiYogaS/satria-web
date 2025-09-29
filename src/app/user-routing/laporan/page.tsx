@@ -1,4 +1,4 @@
-import LaporanMingguanPage from "@/components/ui/laporanMingguan";
+import LaporanMingguanPage from "@/components/laporanMingguan";
 
 const LaporanMingguanUser = () => {
   return <LaporanMingguanPage />;

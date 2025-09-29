@@ -8,7 +8,7 @@ interface LaporanHarianProps {
   className?: string;
   disabled?: boolean;
   defaultValue?: string;
-  onContentChange?: (hasContent: boolean) => void; // ✅ Tambah prop ini
+  onContentChange?: (hasContent: boolean) => void; 
 }
 
 export interface LaporanHarianHandle {
@@ -22,33 +22,23 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
     { className, disabled = false, defaultValue = "", onContentChange },
     ref
   ) => {
-    // ✅ Destructure onContentChange
-
     const [laporan, setLaporan] = useState<string>(defaultValue);
     const [isFocused, setIsFocused] = useState<boolean>(false);
 
     const MIN_CHARACTERS = 5;
     const RECOMMENDED_CHARACTERS = 100;
 
-    // ✅ Update useImperativeHandle dengan logging
     useImperativeHandle(ref, () => ({
       hasContent: () => {
         const trimmedText = laporan.trim();
         const result = trimmedText.length >= MIN_CHARACTERS;
-        console.log("🔍 hasContent called:", {
-          textLength: trimmedText.length,
-          minRequired: MIN_CHARACTERS,
-          result: result,
-        });
         return result;
       },
       getLaporan: () => {
         const result = laporan.trim();
-        console.log("📝 getLaporan called:", result.length, "chars");
         return result;
       },
       clearLaporan: () => {
-        console.log("🗑️ clearLaporan called");
         setLaporan("");
         if (onContentChange) onContentChange(false);
       },
@@ -59,12 +49,9 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
       const value = e.target.value;
       setLaporan(value);
 
-      console.log("📝 LaporanHarian text changed:", value.length, "chars");
-
       // ✅ Force callback setiap perubahan
       if (onContentChange) {
         const hasContent = value.trim().length >= MIN_CHARACTERS;
-        console.log("📞 Calling onContentChange:", hasContent);
         onContentChange(hasContent);
       }
     };
@@ -113,9 +100,8 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
         }`}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <FileText className="text-navy-500" size={24} />
-          <h2 className="text-xl font-bold text-navy-500">Laporan Harian</h2>
+        <div className="flex items-center justify-center gap-3 mb-4 text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-navy-500">Laporan Harian</h2>
         </div>
 
         {/* Warning Info */}
@@ -125,15 +111,14 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
             size={16}
           />
           <div className="text-sm text-amber-600">
-            <p className="font-medium mb-1">Wajib diisi sebelum check out</p>
-            <p>
+            <p className="md:text-sm text-xs mb-2">Wajib diisi sebelum check out</p>
+            <p className="md:text-sm text-xs mb-1">
               Minimal {MIN_CHARACTERS} karakter. Deskripsikan aktivitas dan
               pencapaian Anda hari ini.
             </p>
           </div>
         </div>
 
-        {/* Textarea - tinggi otomatis untuk text panjang */}
         <div className="mb-4">
           <textarea
             value={laporan}
@@ -141,8 +126,8 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             disabled={disabled}
-            placeholder="Contoh: Hari ini saya menyelesaikan review code untuk fitur absensi dan menghadiri meeting dengan tim development..."
-            className={`w-full min-h-[8rem] max-h-[16rem] p-4 border rounded-lg resize-y transition-all duration-200 placeholder:text-sm ${
+            placeholder="Tulis laporan harian Anda di sini..."
+            className={`w-full min-h-[8rem] max-h-[16rem] p-4 border rounded-lg resize-y transition-all duration-200 md:text-sm text-xs placeholder:text-xs md:placeholder:text-sm ${
               disabled
                 ? "bg-gray-100 cursor-not-allowed opacity-60"
                 : isFocused
@@ -161,7 +146,7 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
           <div className="flex items-center gap-4">
             {/* Character Count */}
             <span
-              className={`font-medium ${
+              className={`md:text-sm text-xs ${
                 hasMinContent
                   ? "text-green-600"
                   : trimmedCharCount > 0
@@ -172,15 +157,6 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
               {trimmedCharCount}/{MIN_CHARACTERS} karakter minimal
             </span>
 
-            {hasMinContent && (
-              <span className="text-green-600 text-xs">
-                ✅ Syarat terpenuhi
-              </span>
-            )}
-
-            <span className="text-gray-400 text-xs">
-              {charCount} karakter total
-            </span>
           </div>
 
           {/* Status Badge */}
@@ -189,28 +165,6 @@ const LaporanHarian = forwardRef<LaporanHarianHandle, LaporanHarianProps>(
           >
             {status.text}
           </div>
-        </div>
-
-        {/* Progress Bar */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-medium text-gray-600">
-              Kelengkapan
-            </span>
-            <span className="text-xs text-gray-500">
-              {Math.round(progressValue)}%
-              {trimmedCharCount > RECOMMENDED_CHARACTERS && (
-                <span className="text-green-600 ml-1">(Siap checkout!)</span>
-              )}
-            </span>
-          </div>
-
-          <Progress
-            value={progressValue}
-            className={`h-2 ${hasMinContent ? "bg-green-100" : "bg-gray-100"}`}
-          />
-
-          <p className="text-xs text-gray-500 mt-2">{getProgressMessage()}</p>
         </div>
 
         {/* ✅ Info tambahan untuk laporan panjang */}

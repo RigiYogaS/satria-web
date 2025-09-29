@@ -1,9 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 // GET: Mendapatkan semua IP yang diizinkan
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const ip = searchParams.get("ip");
+
+    // Jika ada query ip, cari satu data saja
+    if (ip) {
+      const ipData = await prisma.ipLokasi.findUnique({
+        where: { ip },
+        select: { nama_wifi: true },
+      });
+      return NextResponse.json({ nama_wifi: ipData?.nama_wifi || null });
+    }
+
+    // Jika tidak ada query ip, kembalikan list (seperti sebelumnya)
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
+
     const ipData = await prisma.ipLokasi.findMany({
       select: {
         id: true,
@@ -11,6 +30,9 @@ export async function GET() {
         nama_wifi: true,
         created_at: true,
       },
+      orderBy: { created_at: "desc" },
+      skip,
+      take: limit,
     });
 
     return NextResponse.json(ipData);
@@ -26,6 +48,11 @@ export async function GET() {
 // POST: Menambah IP baru (untuk admin)
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { ip, nama_wifi } = await request.json();
 
     if (!ip || !nama_wifi) {
@@ -55,6 +82,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     await prisma.ipLokasi.delete({ where: { id: Number(params.id) } });
     return NextResponse.json({ success: true });
   } catch {
@@ -66,8 +98,13 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const { ip, nama_wifi } = await request.json();
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { ip, nama_wifi } = await request.json();
     const updated = await prisma.ipLokasi.update({
       where: { id: Number(params.id) },
       data: { ip, nama_wifi },

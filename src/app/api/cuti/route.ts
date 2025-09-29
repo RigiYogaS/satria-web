@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 // GET /api/cuti - Get all leave requests
 export async function GET(request: NextRequest) {
@@ -9,7 +7,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const user_id = searchParams.get("user_id");
     const status = searchParams.get("status");
-    const limit = searchParams.get("limit");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
 
     const whereClause: any = {};
 
@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { created_at: "desc" },
-      take: limit ? parseInt(limit) : undefined,
+      skip,
+      take: limit,
     });
 
     return NextResponse.json({
@@ -53,18 +54,15 @@ export async function GET(request: NextRequest) {
 // POST /api/cuti - Create leave request
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const {
-      user_id,
-      alasan,
-      bukti_file,
-      keterangan,
-      lebih_dari_sehari,
-      tgl_mulai,
-      tgl_selesai,
-    } = body;
+    const formData = await request.formData(); // <--- Ganti dari request.json()
+    const user_id = formData.get("user_id");
+    const alasan = formData.get("alasan");
+    const bukti_file = formData.get("bukti_file"); // File
+    const keterangan = formData.get("keterangan");
+    const lebih_dari_sehari = formData.get("lebih_dari_sehari") === "true";
+    const tgl_mulai = formData.get("tgl_mulai");
+    const tgl_selesai = formData.get("tgl_selesai");
 
-    // Validation
     if (!user_id || !alasan || !tgl_mulai || !tgl_selesai) {
       return NextResponse.json(
         {
@@ -76,43 +74,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user exists
-    const user = await prisma.users.findUnique({
-      where: { id_user: parseInt(user_id) },
-    });
+    // (Opsional) Simpan file bukti ke disk/public/uploads jika perlu
+    // const bukti_file_path = bukti_file ? `/uploads/${bukti_file.name}` : "";
 
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "User not found",
-        },
-        { status: 404 }
-      );
-    }
-
-    // Create leave request
     const cuti = await prisma.cuti.create({
       data: {
-        user_id: parseInt(user_id),
-        alasan,
-        bukti_file,
-        keterangan,
-        lebih_dari_sehari: Boolean(lebih_dari_sehari),
-        tgl_mulai: new Date(tgl_mulai),
-        tgl_selesai: new Date(tgl_selesai),
+        user_id: parseInt(user_id.toString()),
+        alasan: alasan.toString(),
+        bukti_file: bukti_file instanceof File ? bukti_file.name : "",
+        keterangan: keterangan?.toString() ?? "",
+        lebih_dari_sehari,
+        tgl_mulai: new Date(tgl_mulai.toString()),
+        tgl_selesai: new Date(tgl_selesai.toString()),
         status: "pending",
-      },
-      include: {
-        user: {
-          select: {
-            id_user: true,
-            nama: true,
-            email: true,
-            jabatan: true,
-            divisi: true,
-          },
-        },
       },
     });
 
@@ -163,7 +137,7 @@ export async function PUT(request: NextRequest) {
 
     // Check if leave request exists
     const existingCuti = await prisma.cuti.findUnique({
-      where: { id: parseInt(id) },
+      where: { id_cuti: parseInt(id) },
     });
 
     if (!existingCuti) {
@@ -189,7 +163,7 @@ export async function PUT(request: NextRequest) {
     if (status) updateData.status = status;
 
     const updatedCuti = await prisma.cuti.update({
-      where: { id: parseInt(id) },
+      where: { id_cuti: parseInt(id) },
       data: updateData,
       include: {
         user: {
@@ -239,7 +213,7 @@ export async function DELETE(request: NextRequest) {
 
     // Check if leave request exists
     const existingCuti = await prisma.cuti.findUnique({
-      where: { id: parseInt(id) },
+      where: { id_cuti: parseInt(id) },
     });
 
     if (!existingCuti) {
@@ -253,7 +227,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await prisma.cuti.delete({
-      where: { id: parseInt(id) },
+      where: { id_cuti: parseInt(id) },
     });
 
     return NextResponse.json({

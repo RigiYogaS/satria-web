@@ -1,3 +1,5 @@
+"use client";
+
 import DashboardUser from "@/components/dashboardUser";
 
 const DashboardPage = () => {

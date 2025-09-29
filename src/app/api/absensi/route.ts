@@ -1,47 +1,50 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+// Helper: Dapatkan awal dan akhir hari dalam UTC
+function getTodayRangeUTC() {
+  const now = new Date();
+  const startOfDay = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0)
+  );
+  const endOfDay = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      0,
+      0,
+      0
+    )
+  );
+  return { startOfDay, endOfDay };
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const {
-      type,
-      latitude,
-      longitude,
-      accuracy,
-      jamDatang,
-      jamPulang,
-      laporanHarian,
-      bypassAuth, 
-    } = body;
+    const { type, latitude, longitude, accuracy, laporanHarian, ipAddress } = body;
 
-    // ✅ BYPASS AUTHENTICATION FOR TESTING
-    let userId: number;
-
-    if (bypassAuth) {
-      console.log("🔧 BYPASSING AUTHENTICATION FOR TESTING");
-      userId = 1; // Use default user ID for testing
-    } else {
-      const session = await getServerSession(authOptions);
-      if (!session?.user?.id) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-      userId = parseInt(session.user.id);
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = parseInt(session.user.id);
 
-    // ✅ GET TODAY'S DATE IN LOCAL TIME
-    const today = new Date();
-    const indonesiaDate = new Date(today.getTime() + 7 * 60 * 60 * 1000); // UTC+7
-    indonesiaDate.setHours(0, 0, 0, 0);
+    // Range hari ini UTC
+    const { startOfDay, endOfDay } = getTodayRangeUTC();
 
     if (type === "checkin") {
-      // Check if already checked in today
+      // Cek sudah check-in hari ini
       const existingCheckin = await prisma.absensi.findFirst({
         where: {
           user_id: userId,
-          tanggal: indonesiaDate,
+          tanggal: {
+            gte: startOfDay,
+            lt: endOfDay,
+          },
         },
       });
 
@@ -52,33 +55,31 @@ export async function POST(request: Request) {
         );
       }
 
-      // ✅ Create check-in dengan GPS - explicit fields
       const newAbsensi = await prisma.absensi.create({
         data: {
           user_id: userId,
-          tanggal: indonesiaDate,
-          waktu: new Date(),
+          tanggal: new Date(), 
           latitude: latitude ? parseFloat(latitude.toString()) : null,
           longitude: longitude ? parseFloat(longitude.toString()) : null,
           accuracy: accuracy ? parseFloat(accuracy.toString()) : null,
           status: "Hadir",
-          ip_address: "192.168.200.53",
+          ip_address: ipAddress || "", 
         },
       });
-
-      console.log("✅ Check-in created:", newAbsensi.id_absensi);
 
       return NextResponse.json({
         success: true,
         message: "Check-in berhasil",
-        data: { jamDatang, id: newAbsensi.id_absensi },
+        data: { id: newAbsensi.id_absensi },
       });
     } else if (type === "checkout") {
-      // ✅ Update existing record dengan checkout time dan laporan
       const result = await prisma.absensi.updateMany({
         where: {
           user_id: userId,
-          tanggal: indonesiaDate,
+          tanggal: {
+            gte: startOfDay,
+            lt: endOfDay,
+          },
           jam_checkout: null,
         },
         data: {
@@ -94,12 +95,9 @@ export async function POST(request: Request) {
         );
       }
 
-      console.log("✅ Check-out updated:", result.count, "records");
-
       return NextResponse.json({
         success: true,
         message: "Check-out berhasil",
-        data: { jamPulang, laporan: laporanHarian },
       });
     }
 
@@ -108,7 +106,6 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   } catch (error) {
-    console.error("❌ Absensi API Error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -118,72 +115,46 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    // ✅ BYPASS AUTHENTICATION FOR GET REQUEST TOO
-    let userId: number;
-
-    try {
-      const session = await getServerSession(authOptions);
-      if (session?.user?.id) {
-        userId = parseInt(session.user.id);
-      } else {
-        console.log("🔧 No session found, using default user ID");
-        userId = 1; // Use default user ID
-      }
-    } catch (error) {
-      console.log("🔧 Session error, using default user ID");
-      userId = 1;
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = parseInt(session.user.id);
 
-    // ✅ GET TODAY'S DATE IN LOCAL TIME
-    const today = new Date();
-    const indonesiaDate = new Date(today.getTime() + 7 * 60 * 60 * 1000); // UTC+7
-    indonesiaDate.setHours(0, 0, 0, 0);
+    // Range hari ini UTC
+    const { startOfDay, endOfDay } = getTodayRangeUTC();
 
-    console.log(
-      "🔍 Checking absensi for date:",
-      indonesiaDate.toISOString().split("T")[0],
-      "User ID:",
-      userId
-    );
-
-    // ✅ Get today's absensi with GPS and checkout data
     const absensi = await prisma.absensi.findFirst({
       where: {
         user_id: userId,
-        tanggal: indonesiaDate,
+        tanggal: {
+          gte: startOfDay,
+          lt: endOfDay,
+        },
       },
     });
-
-    console.log("📊 Absensi found:", !!absensi, absensi?.id_absensi);
 
     if (!absensi) {
       return NextResponse.json({
         success: true,
-        data: {
-          hasCheckedIn: false,
-          hasCheckedOut: false,
-          absensi: null,
-        },
+        data: null,
       });
+    }
+
+    let namaWifi = null;
+    if (absensi.ip_address) {
+      const ipLokasi = await prisma.ipLokasi.findUnique({
+        where: { ip: absensi.ip_address },
+      });
+      namaWifi = ipLokasi?.nama_wifi || null;
     }
 
     return NextResponse.json({
       success: true,
-      data: {
-        hasCheckedIn: true,
-        hasCheckedOut: !!absensi.jam_checkout,
-        absensi: {
-          waktu: absensi.waktu,
-          latitude: absensi.latitude,
-          longitude: absensi.longitude,
-          accuracy: absensi.accuracy,
-          checkoutTime: absensi.jam_checkout,
-          laporanHarian: absensi.laporan_harian,
-        },
-      },
+      data: absensi,
+      nama_wifi: namaWifi,
     });
   } catch (error) {
-    console.error("❌ Get Absensi Error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

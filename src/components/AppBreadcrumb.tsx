@@ -19,80 +19,84 @@ interface BreadcrumbItemType {
 
 const AppBreadcrumb = () => {
   const pathname = usePathname();
-  
+
   // Mapping path ke breadcrumb items
   const getBreadcrumbItems = (path: string): BreadcrumbItemType[] => {
-    if (path === '/dashboard' || path === '/') {
-      return [{ label: 'Dashboard', isActive: true }];
+    if (path === "/dashboard" || path === "/") {
+      return [{ label: "Dashboard", isActive: true }];
     }
-    
-    if (path.startsWith('/user/absensi/hari-ini')) {
+
+    if (path.startsWith("/user-routing/absensi/hari-ini")) {
       return [
-        { label: 'Absensi', href: '/user/absensi' },
-        { label: 'Absensi Hari Ini', isActive: true }
+        { label: "Absensi", href: "/user-routing/absensi" },
+        { label: "Absensi Hari Ini", isActive: true },
       ];
     }
-    
-    if (path.startsWith('/user/absensi/riwayat')) {
+
+    if (path.startsWith("/user-routing/absensi/riwayat")) {
       return [
-        { label: 'Absensi', href: '/user/absensi' },
-        { label: 'Riwayat Absensi', isActive: true }
+        { label: "Absensi", href: "/user-routing/absensi" },
+        { label: "Riwayat Absensi", isActive: true },
       ];
     }
-    
-    if (path.startsWith('/user/cuti/pengajuan')) {
+
+    if (path.startsWith("/user-routing/cuti/pengajuan")) {
       return [
-        { label: 'Cuti', href: '/user/cuti' },
-        { label: 'Pengajuan Cuti', isActive: true }
+        { label: "Cuti", href: "/user-routing/cuti" },
+        { label: "Pengajuan Cuti", isActive: true },
       ];
     }
-    
-    if (path.startsWith('/user/cuti/riwayat')) {
+
+    if (path.startsWith("/user-routing/cuti/riwayat")) {
       return [
-        { label: 'Cuti', href: '/user/cuti' },
-        { label: 'Riwayat Cuti', isActive: true }
+        { label: "Cuti", href: "/user-routing/cuti" },
+        { label: "Riwayat Cuti", isActive: true },
       ];
     }
-    
-    if (path.startsWith('/user/laporan')) {
-      return [{ label: 'Laporan Mingguan', isActive: true }];
+
+    if (path.startsWith("/user-routing/laporan")) {
+      return [{ label: "Laporan Mingguan", isActive: true }];
+    }
+
+    if (path.startsWith("/user-routing/dashboardUser")) {
+      return [{ label: "Dashboard", isActive: true }];
     }
 
     // Admin paths
-    if (path.startsWith('/admin/dashboard')) {
-      return [{ label: 'Dashboard', isActive: true }];
+    if (path.startsWith("/admin/dashboard")) {
+      return [{ label: "Dashboard", isActive: true }];
     }
-    
-    if (path.startsWith('/admin/users')) {
+
+    if (path.startsWith("/admin/users")) {
       return [
-        { label: 'Management', href: '/admin/management' },
-        { label: 'User Management', isActive: true }
+        { label: "Management", href: "/admin/management" },
+        { label: "User Management", isActive: true },
       ];
     }
-    
-    if (path.startsWith('/admin/approval')) {
+
+    if (path.startsWith("/admin/approval")) {
       return [
-        { label: 'Management', href: '/admin/management' },
-        { label: 'Approval Cuti', isActive: true }
+        { label: "Management", href: "/admin/management" },
+        { label: "Approval Cuti", isActive: true },
       ];
     }
-    
-    if (path.startsWith('/admin/laporan/absensi')) {
+
+    if (path.startsWith("/admin/laporan/absensi")) {
       return [
-        { label: 'Laporan', href: '/admin/laporan' },
-        { label: 'Laporan Absensi', isActive: true }
+        { label: "Laporan", href: "/admin/laporan" },
+        { label: "Laporan Absensi", isActive: true },
       ];
     }
-    
-    if (path.startsWith('/admin/laporan/kinerja')) {
+
+    if (path.startsWith("/admin/laporan/kinerja")) {
       return [
-        { label: 'Laporan', href: '/admin/laporan' },
-        { label: 'Laporan Kinerja', isActive: true }
+        { label: "Laporan", href: "/admin/laporan" },
+        { label: "Laporan Kinerja", isActive: true },
       ];
     }
-    
+
     // Default fallback
-    return [{ label: 'Dashboard', isActive: true }];
+    return [{ label: "Dashboard", isActive: true }];
   };
 
   const items = getBreadcrumbItems(pathname);
@@ -108,7 +112,7 @@ const AppBreadcrumb = () => {
                   {item.label}
                 </BreadcrumbPage>
               ) : (
-                <BreadcrumbLink 
+                <BreadcrumbLink
                   href={item.href}
                   className="text-neutral-500 hover:text-neutral-700"
                 >

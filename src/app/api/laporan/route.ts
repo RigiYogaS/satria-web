@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
 
 // GET /api/laporan - Get all reports
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
     const user_id = searchParams.get("user_id");
-    const limit = searchParams.get("limit");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
 
     const whereClause: any = {};
 
@@ -28,7 +29,8 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { created_at: "desc" },
-      take: limit ? parseInt(limit) : undefined,
+      skip,
+      take: limit,
     });
 
     return NextResponse.json({
@@ -51,72 +53,40 @@ export async function GET(request: NextRequest) {
 // POST /api/laporan - Create report
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { user_id, judul, file_path, nilai_admin } = body;
+    const formData = await request.formData();
+    const file = formData.get("file") as File;
+    const user_id = formData.get("user_id");
+    const judul = formData.get("judul");
+    const file_path = formData.get("file_path")?.toString() || "";
 
-    // Validation
-    if (!user_id || !judul || !file_path) {
+    if (!file || !user_id || !judul) {
       return NextResponse.json(
         {
           success: false,
-          error: "Missing required fields: user_id, judul, file_path",
+          error: "Missing required fields: user_id, judul, file",
         },
         { status: 400 }
       );
     }
 
-    // Check if user exists
-    const user = await prisma.users.findUnique({
-      where: { id_user: parseInt(user_id) },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "User not found",
-        },
-        { status: 404 }
-      );
-    }
-
-    // Create report
+    // Tambahkan setelah validasi
     const laporan = await prisma.laporan.create({
       data: {
-        user_id: parseInt(user_id),
-        judul,
-        file_path,
-        nilai_admin,
+        user_id: Number(user_id),
+        judul: judul.toString(),
+        file_path, 
         tanggal_upload: new Date(),
-      },
-      include: {
-        user: {
-          select: {
-            id_user: true,
-            nama: true,
-            email: true,
-            jabatan: true,
-            divisi: true,
-          },
-        },
       },
     });
 
     return NextResponse.json(
-      {
-        success: true,
-        data: laporan,
-        message: "Report created successfully",
-      },
+      { success: true, message: "Report created successfully" },
       { status: 201 }
     );
   } catch (error) {
     console.error("Error creating laporan:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to create report",
-      },
+      { success: false, error: "Failed to create report" },
       { status: 500 }
     );
   }
@@ -140,7 +110,7 @@ export async function PUT(request: NextRequest) {
 
     // Check if report exists
     const existingLaporan = await prisma.laporan.findUnique({
-      where: { id: parseInt(id) },
+      where: { id_laporan: parseInt(id) },
     });
 
     if (!existingLaporan) {
@@ -161,7 +131,7 @@ export async function PUT(request: NextRequest) {
     if (nilai_admin !== undefined) updateData.nilai_admin = nilai_admin;
 
     const updatedLaporan = await prisma.laporan.update({
-      where: { id: parseInt(id) },
+      where: { id_laporan: parseInt(id) },
       data: updateData,
       include: {
         user: {
@@ -211,7 +181,7 @@ export async function DELETE(request: NextRequest) {
 
     // Check if report exists
     const existingLaporan = await prisma.laporan.findUnique({
-      where: { id: parseInt(id) },
+      where: { id_laporan: parseInt(id) },
     });
 
     if (!existingLaporan) {
@@ -225,7 +195,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await prisma.laporan.delete({
-      where: { id: parseInt(id) },
+      where: { id_laporan: parseInt(id) },
     });
 
     return NextResponse.json({

@@ -55,7 +55,7 @@ const VerifyOTP = ({ email }: VerifyOTPProps) => {
           "Email berhasil diverifikasi! Mengalihkan ke halaman login..."
         );
         setTimeout(() => {
-          router.push("/auth/login?verified=true");
+          router.push("/auth-routing/login?verified=true");
         }, 2000);
       } else {
         setMessage(data.error || "Terjadi kesalahan");
@@ -85,7 +85,7 @@ const VerifyOTP = ({ email }: VerifyOTPProps) => {
 
       if (response.ok) {
         setMessage("OTP baru telah dikirim ke email Anda");
-        setCountdown(60); // 60 detik countdown
+        setCountdown(60);
       } else {
         setMessage(data.error || "Gagal mengirim ulang OTP");
       }
@@ -102,7 +102,10 @@ const VerifyOTP = ({ email }: VerifyOTPProps) => {
       <div className="w-full h-screen flex justify-center items-center">
         <div className="text-center">
           <h1 className="text-2xl font-semibold mb-4">Email tidak ditemukan</h1>
-          <Link href="/auth/regis" className="text-blue-600 hover:underline">
+          <Link
+            href="/auth-routing/regis"
+            className="text-blue-600 hover:underline"
+          >
             Kembali ke registrasi
           </Link>
         </div>
@@ -111,125 +114,142 @@ const VerifyOTP = ({ email }: VerifyOTPProps) => {
   }
 
   return (
-    <section className="w-full h-screen bg-transparent flex justify-center items-center font-montserrat">
-      {/* LEFT SIDE */}
-      <div className="w-1/2 bg-white h-screen flex flex-col items-center justify-center gap-5">
-        <div className="flex flex-col gap-5 w-2/3 max-w-md">
-          {/* HEADER */}
-          <div className="flex flex-col text-center gap-1">
-            <h1 className="text-3xl font-semibold">Verifikasi Email</h1>
-            <p className="text-gray-600">
-              Masukkan kode OTP yang telah dikirim ke
-            </p>
-            <p className="font-medium text-navy-600">{email}</p>
-          </div>
-
-          {/* FORM */}
-          <form
-            onSubmit={handleSubmit}
-            className="w-full flex flex-col gap-4 justify-center items-center"
-          >
-            {message && (
-              <div
-                className={`p-3 rounded-md text-sm w-full text-center ${
-                  message.includes("berhasil")
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
-                }`}
-              >
-                {message}
-              </div>
-            )}
-
-            {/* OTP INPUT USING SHADCN */}
-            <div className="grid w-full items-center gap-2">
-              <Label htmlFor="otp">Kode OTP</Label>
-              <div className="flex justify-center">
-                <InputOTP
-                  maxLength={6}
-                  pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
-                  value={otp}
-                  onChange={(value) => setOtp(value)}
-                >
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    <InputOTPSlot index={2} />
-                    <InputOTPSlot index={3} />
-                    <InputOTPSlot index={4} />
-                    <InputOTPSlot index={5} />
-                  </InputOTPGroup>
-                </InputOTP>
-              </div>
-              <p className="text-xs text-gray-500 text-center">
-                Kode OTP berlaku selama 15 menit
+    <section className="w-full min-h-screen flex flex-col md:flex-row bg-neutral-100 md:bg-white font-montserrat">
+      {/* KIRI: FORM VERIFIKASI */}
+      <div className="w-full md:w-1/2 min-h-screen bg-neutral-100 md:bg-white grid grid-rows-[auto_1fr]">
+        {/* ROW 1: LOGO MOBILE */}
+        <div className="md:hidden flex flex-col items-center mt-8 mb-2 bg-neutral-100">
+          <Image
+            src="/logo/divhub.png"
+            alt="logo"
+            width={200}
+            height={200}
+            className="w-16 h-auto mb-2"
+          />
+          <h1 className="text-xl font-bold text-navy-600 mb-2 tracking-wide">
+            SATRIA
+          </h1>
+        </div>
+        {/* ROW 2: CARD FORM */}
+        <div className="flex justify-center items-start py-6 w-full bg-white rounded-t-3xl md:rounded-none md:rounded-l-3xl shadow-lg">
+          <div className="w-full max-w-md px-6 flex flex-col items-center justify-center h-auto md:h-screen">
+            {/* HEADER */}
+            <div className="flex flex-col text-center gap-1 w-full mb-6">
+              <h1 className="text-2xl font-bold mb-1 md:text-3xl">
+                Verifikasi Email
+              </h1>
+              <p className="text-sm text-gray-600 hidden md:block">
+                Masukkan kode OTP yang telah dikirim ke email Anda
               </p>
+              <p className="font-medium text-navy-600 break-all">{email}</p>
             </div>
-
-            {/* SUBMIT BUTTON */}
-            <Button
-              type="submit"
-              className="bg-navy-200 hover:bg-navy-400 w-full mt-4"
-              disabled={loading || otp.length !== 6}
+            {/* FORM */}
+            <form
+              onSubmit={handleSubmit}
+              className="w-full flex flex-col gap-4 justify-center items-center"
             >
-              {loading ? "Memverifikasi..." : "Verifikasi"}
-            </Button>
-
-            {/* RESEND OTP */}
-            <div className="text-center space-y-2">
-              <p className="text-sm text-gray-600">Tidak menerima kode?</p>
-              {countdown > 0 ? (
-                <p className="text-sm text-gray-500">
-                  Kirim ulang dalam {countdown} detik
-                </p>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleResendOTP}
-                  disabled={resendLoading}
-                  className="text-sm text-navy-600 hover:text-navy-800 underline disabled:opacity-50"
+              {message && (
+                <div
+                  className={`p-3 rounded-md text-sm w-full text-center mb-2 ${
+                    message.includes("berhasil")
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
                 >
-                  {resendLoading ? "Mengirim..." : "Kirim ulang OTP"}
-                </button>
+                  {message}
+                </div>
               )}
-            </div>
 
-            {/* BACK TO LOGIN */}
-            <p className="text-center text-sm">
-              <Link
-                href="/auth/login"
-                className="text-navy-400 hover:underline"
+              {/* OTP INPUT */}
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="otp">Kode OTP</Label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
+                    value={otp}
+                    onChange={(value) => setOtp(value)}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                <p className="text-xs text-gray-500 text-center">
+                  Kode OTP berlaku selama 15 menit
+                </p>
+              </div>
+
+              {/* SUBMIT BUTTON */}
+              <Button
+                type="submit"
+                className="bg-navy-200 hover:bg-navy-400 w-full mt-2"
+                disabled={loading || otp.length !== 6}
               >
-                Kembali ke login
-              </Link>
-            </p>
-          </form>
+                {loading ? "Memverifikasi..." : "Verifikasi"}
+              </Button>
+
+              {/* RESEND OTP */}
+              <div className="text-center space-y-2 w-full">
+                <p className="text-sm text-gray-600">Tidak menerima kode?</p>
+                {countdown > 0 ? (
+                  <p className="text-sm text-gray-500">
+                    Kirim ulang dalam {countdown} detik
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResendOTP}
+                    disabled={resendLoading}
+                    className="text-sm text-navy-600 hover:text-navy-800 underline disabled:opacity-50"
+                  >
+                    {resendLoading ? "Mengirim..." : "Kirim ulang OTP"}
+                  </button>
+                )}
+              </div>
+
+              {/* BACK TO LOGIN */}
+              <p className="text-center text-sm w-full">
+                <Link
+                  href="/auth-routing/login"
+                  className="text-navy-400 hover:underline"
+                >
+                  Kembali ke login
+                </Link>
+              </p>
+            </form>
+          </div>
         </div>
       </div>
 
-      {/* RIGHT SIDE */}
-      <div className="relative w-1/2 bg-neutral-100 h-screen flex items-center justify-center">
+      {/* KANAN: LOGO & BACKGROUND */}
+      <div className="hidden md:flex flex-col justify-center items-center w-1/2 min-h-screen bg-neutral-100 relative">
         <Image
           src="/img/continent.png"
           alt="continent"
           width={1000}
           height={1000}
-          className="w-full h-auto"
+          className="absolute w-full h-auto opacity-60"
         />
-        <div className="absolute flex flex-col justify-center items-center gap-4">
+        <div className="relative z-10 flex flex-col items-center">
           <Image
             src="/logo/divhub.png"
             alt="logo"
-            width={500}
-            height={500}
-            className="w-[40%] h-auto"
+            width={200}
+            height={200}
+            className="w-48 h-auto mb-2"
           />
-          <div className="flex flex-col justify-center items-center">
-            <h1 className="text-5xl font-bold text-navy-600">SATRIA</h1>
-            <p className="w-full text-center font-medium">
-              Sistem Absensi Tepat, Responsif, Interaktif dan Akurat
-            </p>
-          </div>
+          <h1 className="text-4xl font-bold text-navy-600 mb-2 tracking-wide">
+            SATRIA
+          </h1>
+          <p className="text-base text-center font-medium">
+            Sistem Absensi Tepat, Responsif, Interaktif dan Akurat
+          </p>
         </div>
       </div>
     </section>

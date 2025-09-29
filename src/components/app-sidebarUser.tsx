@@ -7,9 +7,10 @@ import {
   Clock7,
   ChevronDown,
   ChevronRight,
-  LogOut
+  LogOut,
 } from "lucide-react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useEffect, useState } from "react";
 
 import {
   Sidebar,
@@ -24,7 +25,6 @@ import {
 
 import Image from "next/image";
 
-import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 import { Button } from "./ui/button";
@@ -33,6 +33,11 @@ const AppSidebarUser = () => {
   const { user, logout } = useAuth();
   const [absensiOpen, setAbsensiOpen] = useState(false);
   const [cutiOpen, setCutiOpen] = useState(false);
+
+  useEffect(() => {
+    console.log("SidebarProvider rendered");
+  }, []);
+
   return (
     <Sidebar
       className="font-montserrat [&_svg]:!w-5 [&_svg]:!h-5 [&_svg]:!stroke-[1.5] group-data-[collapsible=icon]:[&_[data-sidebar=menu-button]]:justify-center"
@@ -47,7 +52,7 @@ const AppSidebarUser = () => {
           </div>
 
           {/* ISI SIDEBAR */}
-          <SidebarGroupContent className="mt-3">
+          <SidebarGroupContent className="mt-3 ">
             <SidebarMenu>
               {/* Dashboard */}
               <SidebarMenuItem>
@@ -57,7 +62,7 @@ const AppSidebarUser = () => {
                   tooltip="Dashboard"
                 >
                   <a
-                    href="/user/dashboardUser"
+                    href="/user-routing/dashboardUser"
                     className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center"
                   >
                     <Home />
@@ -76,7 +81,7 @@ const AppSidebarUser = () => {
                 >
                   <Collapsible.Trigger asChild>
                     <SidebarMenuButton
-                      className={`w-full group-data-[collapsible=icon]:justify-center transition-colors ${
+                      className={`w-2/3 group-data-[collapsible=icon]:justify-center transition-colors ${
                         absensiOpen
                           ? "text-neutral-500 hover:text-neutral-600"
                           : "text-navy-700 hover:text-navy-900"
@@ -98,7 +103,7 @@ const AppSidebarUser = () => {
                     <div className="ml-6 mt-1 space-y-1">
                       <SidebarMenuButton asChild size="sm">
                         <a
-                          href="/user/absensi/hari-ini"
+                          href="/user-routing/absensi/hari-ini"
                           className="text-navy-600 hover:text-navy-800 text-sm"
                         >
                           <span>Absensi Hari Ini</span>
@@ -106,7 +111,7 @@ const AppSidebarUser = () => {
                       </SidebarMenuButton>
                       <SidebarMenuButton asChild size="sm">
                         <a
-                          href="/user/absensi/riwayat"
+                          href="/user-routing/absensi/riwayat"
                           className="text-navy-600 hover:text-navy-800 text-sm"
                         >
                           <span>Riwayat Absensi</span>
@@ -125,7 +130,7 @@ const AppSidebarUser = () => {
                   tooltip="Laporan Mingguan"
                 >
                   <a
-                    href="/user/laporan"
+                    href="/user-routing/laporan"
                     className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center"
                   >
                     <Files />
@@ -163,7 +168,7 @@ const AppSidebarUser = () => {
                     <div className="ml-6 mt-1 space-y-1">
                       <SidebarMenuButton asChild size="sm">
                         <a
-                          href="/user/cuti/pengajuan"
+                          href="/user-routing/cuti/pengajuan"
                           className="text-navy-600 hover:text-navy-800 text-sm"
                         >
                           <span>Pengajuan Cuti</span>
@@ -171,7 +176,7 @@ const AppSidebarUser = () => {
                       </SidebarMenuButton>
                       <SidebarMenuButton asChild size="sm">
                         <a
-                          href="/user/cuti/riwayat"
+                          href="/user-routing/cuti/riwayat"
                           className="text-navy-600 hover:text-navy-800 text-sm"
                         >
                           <span>Riwayat Cuti</span>
@@ -186,9 +191,9 @@ const AppSidebarUser = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        <Button onClick={logout} variant="outline" className="w-full">
-          <LogOut className="group-data-[collapsible=icon]:block group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5 hidden" />
+      <SidebarFooter className="flex justify-center">
+        <Button onClick={logout} variant="outline" className="w-2/3 flex mx-auto bg-red-200 text-white hover:bg-red-400 hover:text-white">
+          <LogOut className="group-data-[collapsible=icon]:block group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5 " />
           <span className="group-data-[collapsible=icon]:hidden">Logout</span>
         </Button>
       </SidebarFooter>

@@ -1,7 +1,10 @@
+import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 import { getUsers, createUser } from "@/services/user";
 import bcrypt from "bcryptjs";
 import { generateOTP, sendOTPEmail } from "@/lib/email";
+import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
 
 // Fungsi validasi password
 function validatePassword(password: string): {
@@ -36,9 +39,22 @@ function validatePassword(password: string): {
   };
 }
 
-export async function GET() {
-  const users = await getUsers();
-  return NextResponse.json(users);
+export async function GET(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
+  const skip = (page - 1) * limit;
+  const absensi = await prisma.absensi.findMany({
+    where: { user_id: Number(session.user.id) },
+    orderBy: { tanggal: "desc" },
+    skip,
+    take: limit,
+  });
+  return NextResponse.json(absensi);
 }
 
 export async function POST(request: Request) {
@@ -47,9 +63,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { email, nama, jabatan, divisi_id, password, role } = body;
-    divisi_id_submitted = divisi_id; // Store for error handling
+    divisi_id_submitted = divisi_id;
 
-    // Validasi input
     if (!email || !nama || !jabatan || !divisi_id || !password) {
       return NextResponse.json(
         { error: "Semua field harus diisi" },
@@ -57,7 +72,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validasi email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
@@ -66,7 +80,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validasi password strength
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
       return NextResponse.json(
@@ -79,7 +92,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validasi nama dan jabatan
     if (nama.trim().length < 2) {
       return NextResponse.json(
         { error: "Nama minimal 2 karakter" },
@@ -104,8 +116,8 @@ export async function POST(request: Request) {
       otpExpires.getMinutes() + parseInt(process.env.OTP_EXPIRY_MINUTES || "15")
     );
 
-    // Buat user baru dengan status pending
-    const user = await createUser({
+    // Buat  baru dengan status pending
+    const useuserr = await createUser({
       email: email.toLowerCase().trim(),
       nama: nama.trim(),
       jabatan: jabatan.trim(),
@@ -137,7 +149,7 @@ export async function POST(request: Request) {
       otp_code: __,
       otp_expires: ___,
       ...userWithoutSensitiveData
-    } = user as any;
+    } = useuserr as any;
 
     return NextResponse.json(
       {

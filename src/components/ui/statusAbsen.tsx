@@ -5,11 +5,13 @@ import LocationCard from "./locationCard";
 
 interface AbsenData {
   jamDatang: string;
+  jamKeluar?: string;
   tanggal: string;
   lokasi?: string;
   latitude: number;
   longitude: number;
   accuracy: number;
+  ipAddress?: string;
 }
 
 interface StatusAbsenHandle {
@@ -20,84 +22,117 @@ interface StatusAbsenHandle {
 interface StatusAbsenProps {
   checkOutTime?: string;
   isCheckedOut?: boolean;
+  absenData?: AbsenData | null;
+  visible?: boolean;
 }
 
 const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
-  ({ checkOutTime = "00.00 WIB", isCheckedOut = false }, ref) => {
-    const [absenData, setAbsenData] = useState<AbsenData | null>(null);
+  (
+    { checkOutTime = "00.00 WIB", isCheckedOut = false, absenData, visible },
+    ref
+  ) => {
     const [currentCheckOutTime, setCurrentCheckOutTime] =
       useState<string>("--.--.--");
-    const [isVisible, setIsVisible] = useState<boolean>(false);
     const [localCheckedOut, setLocalCheckedOut] =
       useState<boolean>(isCheckedOut);
-
-    const mockIpAddress = "192.168.200.53";
+    const [checkoutLocationName, setCheckoutLocationName] =
+      useState<string>("");
+    const [locationName, setLocationName] = useState<string>("");
+    const [wifiName, setWifiName] = useState<string>("");
 
     useImperativeHandle(ref, () => ({
       triggerCheckIn: (data: AbsenData) => {
-        console.log("📍 StatusAbsen received check in data:", data);
-        setAbsenData(data);
-        setIsVisible(true); // ✅ MAKE SURE THIS IS SET TO TRUE
         setLocalCheckedOut(false);
         setCurrentCheckOutTime("--.--.--");
+        setCheckoutLocationName("");
       },
       triggerCheckOut: (data: AbsenData) => {
-        console.log("📍 StatusAbsen received check out data:", data);
-        console.log("🕐 Setting checkout time to:", data.jamDatang);
         setCurrentCheckOutTime(data.jamDatang);
         setLocalCheckedOut(true);
+        // Reverse geocoding untuk nama lokasi checkout
+        if (data.latitude && data.longitude) {
+          getRealLocationName(data.latitude, data.longitude).then(
+            setCheckoutLocationName
+          );
+        }
       },
     }));
-
-    // ✅ ADD DEBUG LOGGING TO TRACK STATE CHANGES
-    useEffect(() => {
-      console.log("🔍 StatusAbsen state:", {
-        isVisible,
-        absenData: !!absenData,
-        localCheckedOut,
-        currentCheckOutTime,
-      });
-    }, [isVisible, absenData, localCheckedOut, currentCheckOutTime]);
 
     useEffect(() => {
       setLocalCheckedOut(isCheckedOut);
       if (isCheckedOut && checkOutTime !== "00.00 WIB") {
         setCurrentCheckOutTime(checkOutTime);
       }
-    }, [isCheckedOut, checkOutTime]);
+      // Jika absenData berubah dan sudah checkout, update nama lokasi
+      if (isCheckedOut && absenData?.latitude && absenData?.longitude) {
+        getRealLocationName(absenData.latitude, absenData.longitude).then(
+          setCheckoutLocationName
+        );
+      }
+    }, [isCheckedOut, checkOutTime, absenData]);
 
-    // ✅ ADD FALLBACK RENDERING FOR DEBUGGING
-    console.log("🔍 StatusAbsen render check:", {
-      isVisible,
-      hasAbsenData: !!absenData,
-      absenData,
-    });
+    useEffect(() => {
+      if (absenData?.latitude && absenData?.longitude) {
+        getRealLocationName(absenData.latitude, absenData.longitude).then(
+          (name) => {
+            setLocationName(name);
+          }
+        );
+      }
+    }, [absenData?.latitude, absenData?.longitude]);
 
-    if (!isVisible || !absenData) {
-      // ✅ SHOW DEBUG INFO INSTEAD OF RETURNING NULL
-      console.log("❌ StatusAbsen not visible:", { isVisible, absenData });
-      return (
-        <div className="w-full bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-          <p className="text-yellow-700 text-sm">
-            🔍 DEBUG: StatusAbsen tidak tampil
-          </p>
-          <p className="text-xs">
-            {`isVisible: ${isVisible}, absenData: ${absenData}`}
-          </p>
-        </div>
+    // Ambil nama wifi dari ipAddress via API eksternal
+    useEffect(() => {
+      if (absenData?.ipAddress) {
+        const fetchWifiName = async () => {
+          try {
+            const res = await fetch(`/api/ip-lokasi?ip=${absenData.ipAddress}`);
+            const data = await res.json();
+            setWifiName(data.nama_wifi || "");
+          } catch {
+            setWifiName("");
+          }
+        };
+        fetchWifiName();
+      } else {
+        setWifiName("");
+      }
+    }, [absenData?.ipAddress]);
+
+    async function getRealLocationName(
+      latitude: number,
+      longitude: number
+    ): Promise<string> {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
       );
+      const data = await response.json();
+      return data.display_name || "Lokasi tidak tersedia";
     }
+
+    // Helper untuk ambil jam dan menit dari string "14.05.12" atau "14:05:12"
+    const getHourMinute = (timeStr: string) => {
+      if (!timeStr) return "--.--";
+      const clean = timeStr.replace(/\./g, ":");
+      const [hour, minute] = clean.split(":");
+      if (!hour || !minute) return "--.--";
+      return `${hour.padStart(2, "0")}.${minute.padStart(2, "0")}`;
+    };
+
+    if (!visible || !absenData) {
+      return null;
+    }
+
+    const currentIP = absenData?.ipAddress || "";
+    console.log("IP address dikirim ke backend:", currentIP);
 
     return (
       <LocationCard
-        jamDatang={absenData.jamDatang}
-        jamKeluar={currentCheckOutTime}
-        lokasi={absenData.lokasi}
-        currentIP={mockIpAddress}
-        isCheckedOut={localCheckedOut}
-        latitude={absenData.latitude}
-        longitude={absenData.longitude}
-        accuracy={absenData.accuracy}
+        jamDatang={absenData?.jamDatang}
+        jamKeluar={absenData?.jamKeluar}
+        lokasi={locationName}
+        currentIP={absenData?.ipAddress}
+        wifiName={wifiName}
       />
     );
   }
