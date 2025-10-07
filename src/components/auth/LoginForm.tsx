@@ -8,7 +8,7 @@ import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -125,8 +125,13 @@ const LoginForm = () => {
         setMessage("Login berhasil! Mengalihkan ke dashboard...");
         setFormData({ email: "", password: "" });
         setPasswordErrors([]);
-        setTimeout(() => {
-          router.push("/user-routing/dashboardUser");
+        setTimeout(async () => {
+          const session = await getSession();
+          if (session?.user?.role === "admin") {
+            router.push("/admin-routing/dashboardAdmin");
+          } else {
+            router.push("/user-routing/dashboardUser");
+          }
         }, 1000);
       }
     } catch (error) {

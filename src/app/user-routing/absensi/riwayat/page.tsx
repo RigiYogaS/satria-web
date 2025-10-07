@@ -1,4 +1,4 @@
-import RiwayatAbsensiPage from "@/components/riwayatAbsensiUser";
+import RiwayatAbsensiPage from "@/components/user/riwayatAbsensiUser";
 
 const RiwayatAbsensiUser = () => {
   return <RiwayatAbsensiPage />;

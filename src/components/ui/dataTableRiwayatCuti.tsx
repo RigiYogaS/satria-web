@@ -20,19 +20,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-  loading?: boolean;
+interface DataTableRiwayatCutiProps {
+  columns: ColumnDef<any, any>[];
+  data: any[];
+  loading: boolean;
 }
 
-export function DataTableLaporanMingguan<TData, TValue>({
+export function DataTableRiwayatCuti({
   columns,
   data,
-  loading = false,
-}: DataTableProps<TData, TValue>) {
+  loading,
+}: DataTableRiwayatCutiProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const table = useReactTable({
@@ -52,17 +51,23 @@ export function DataTableLaporanMingguan<TData, TValue>({
     },
   });
 
+  const pageSize = table.getState().pagination.pageSize;
+  const pageIndex = table.getState().pagination.pageIndex;
+  const totalRows = data.length;
+  const from = totalRows === 0 ? 0 : pageIndex * pageSize + 1;
+  const to = Math.min((pageIndex + 1) * pageSize, totalRows);
+
   if (loading) {
     return (
-      <div className="mt-6 w-full rounded-md border overflow-x-auto">
-        <Table className="min-w-max w-full text-xs md:text-sm bg-white">
+      <div className="rounded-md border overflow-x-auto">
+        <Table className="w-full min-w-max text-xs md:text-sm bg-white">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="w-1/3 truncate text-center"
+                    className="text-xs md:text-sm text-center"
                   >
                     {header.isPlaceholder
                       ? null
@@ -94,17 +99,10 @@ export function DataTableLaporanMingguan<TData, TValue>({
     );
   }
 
-  // Pagination info
-  const pageSize = table.getState().pagination.pageSize;
-  const pageIndex = table.getState().pagination.pageIndex;
-  const totalRows = data.length;
-  const from = totalRows === 0 ? 0 : pageIndex * pageSize + 1;
-  const to = Math.min((pageIndex + 1) * pageSize, totalRows);
-
   return (
     <div className="space-y-4">
-      <div className="mt-6 w-full rounded-md border bg-white overflow-x-auto">
-        <Table className="w-full text-xs md:text-sm bg-white">
+      <div className="mt-6 overflow-x-auto w-full rounded-md border">
+        <Table className="w-full min-w-max text-xs md:text-sm bg-white">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -147,7 +145,7 @@ export function DataTableLaporanMingguan<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center text-xs md:text-sm"
                 >
-                  Tidak ada data laporan.
+                  Tidak ada data cuti.
                 </TableCell>
               </TableRow>
             )}
@@ -155,9 +153,11 @@ export function DataTableLaporanMingguan<TData, TValue>({
         </Table>
       </div>
 
-      {/* Pagination Info */}
-      <div className="flex flex-col md:flex-row items-center justify-between text-xs md:text-sm text-gray-500 gap-2 mt-4">
-        <div>{`Showing ${from} to ${to} of ${totalRows} entries`}</div>
+      {/* Pagination */}
+      <div className="flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
+        <div className="text-xs md:text-sm text-muted-foreground">
+          {`Showing ${from} to ${to} of ${totalRows} entries`}
+        </div>
         <div className="flex items-center space-x-2">
           <Button
             variant="default"
@@ -191,44 +191,3 @@ export function DataTableLaporanMingguan<TData, TValue>({
     </div>
   );
 }
-
-export type LaporanMingguan = {
-  id_laporan: number;
-  judul: string;
-  tanggal_upload: string;
-  nilai_admin?: string | null;
-  file_path?: string;
-};
-
-export const columnsLaporanMingguan: ColumnDef<LaporanMingguan>[] = [
-  {
-    accessorKey: "judul",
-    header: "Judul",
-    cell: ({ row }) => row.original.judul,
-  },
-  {
-    accessorKey: "tanggal_upload",
-    header: "Tanggal Upload",
-    cell: ({ row }) => {
-      const tanggal = new Date(row.original.tanggal_upload);
-      return tanggal.toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      });
-    },
-  },
-  {
-    accessorKey: "nilai_admin",
-    header: "Nilai",
-    cell: ({ row }) => {
-      const nilai = row.original.nilai_admin;
-      if (!nilai || nilai === "" || nilai === "null") {
-        return (
-          <Badge className="bg-yellow-100 text-yellow-800">Belum Dinilai</Badge>
-        );
-      }
-      return <Badge className="bg-green-100 text-green-800">{nilai}</Badge>;
-    },
-  },
-];

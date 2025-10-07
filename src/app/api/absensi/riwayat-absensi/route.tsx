@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -52,13 +51,15 @@ export async function GET(req: NextRequest) {
     });
 
     const mapped = absensi.map((a) => ({
-      id: a.id_absensi || a.id_absensi || 0,
-      name: a.user_id || "", 
-      date: a.tanggal || "", 
+      id: a.id_absensi || 0,
+      name: a.user_id || "",
+      date: a.tanggal || "",
       tanggal: a.tanggal,
       status: a.status,
-      waktu_masuk: a.waktu || a.tanggal, 
+      waktu_masuk: a.waktu || a.tanggal,
       waktu_keluar: a.jam_checkout || null,
+      checkin_status: a.checkin_status, 
+      checkout_status: a.checkout_status, 
     }));
 
     return NextResponse.json({

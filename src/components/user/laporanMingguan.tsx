@@ -3,16 +3,16 @@
 import React, { useState, useEffect } from "react";
 import AppBreadcrumb from "@/components/AppBreadcrumb";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import AppSidebarUser from "@/components/app-sidebarUser";
+import AppSidebarUser from "@/components/user/app-sidebarUser";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { SearchIcon } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import {
   DataTableLaporanMingguan,
   columnsLaporanMingguan,
   LaporanMingguan,
-} from "./ui/dataTableLaporanMingguan";
+} from "../ui/dataTableLaporanMingguan";
 import { useSession } from "next-auth/react";
 
 const LaporanMingguanPage = () => {
@@ -24,36 +24,37 @@ const LaporanMingguanPage = () => {
   const [search, setSearch] = useState("");
   const { data: session } = useSession();
 
-  useEffect(() => {
-    const fetchLaporan = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch("/api/laporan");
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data)) {
-          const userId = session?.user?.id;
-          setData(
-            json.data
-              .filter(
-                (item: any) => item.user_id?.toString() === userId?.toString()
-              ) // <-- filter sesuai user login
-              .map((item: any) => ({
-                id_laporan: item.id_laporan,
-                judul: item.judul,
-                tanggal_upload: item.tanggal_upload,
-                nilai_admin: item.nilai_admin,
-                file_path: item.file_path,
-              }))
-          );
-        } else {
-          setData([]);
-        }
-      } catch (e) {
+  const fetchLaporan = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/laporan");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        const userId = session?.user?.id;
+        setData(
+          json.data
+            .filter(
+              (item: any) => item.user_id?.toString() === userId?.toString()
+            )
+            .map((item: any) => ({
+              id_laporan: item.id_laporan,
+              judul: item.judul,
+              tanggal_upload: item.tanggal_upload,
+              nilai_admin: item.nilai_admin,
+              file_path: item.file_path,
+            }))
+        );
+      } else {
         setData([]);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (e) {
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (session?.user?.id) fetchLaporan();
   }, [session]);
 
@@ -99,7 +100,7 @@ const LaporanMingguanPage = () => {
       if (json.success) {
         setFile(null);
         setJudul("");
-        // fetchLaporan();
+        await fetchLaporan();
       } else {
         alert(json.error || "Upload gagal");
       }
@@ -111,9 +112,9 @@ const LaporanMingguanPage = () => {
   };
 
   return (
-    <SidebarProvider className="font-montserrat bg-neutral-50">
+    <SidebarProvider className="font-montserrat bg-neutral-100">
       <AppSidebarUser />
-      <main className="flex-1 md:p-6 p-2">
+      <main className="flex-1 md:p-6 p-2 overflow-x-auto">
         <div className="flex items-center gap-3 md:mb-6 mb-3">
           <SidebarTrigger />
           <AppBreadcrumb />
@@ -123,13 +124,11 @@ const LaporanMingguanPage = () => {
             Laporan Mingguan
           </h1>
           {/* Container Input & Search */}
-          <div className="flex flex-col md:flex-row justify-between gap-4 mb-6 w-full">
-            <div className="flex flex-col max-w-xs gap-2">
-              <div className="flex flex-col md:flex-row gap-2">
-                <Label
-                  htmlFor="judul"
-                  className="md:text-base text-sm mb-2 md:w-2/3 w-full"
-                >
+          <div className="flex flex-col md:flex-row gap-4 mb-6 w-full">
+            {/* Form Input */}
+            <div className="flex flex-col gap-2 md:w-1/2 w-full">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="judul" className="md:text-base text-sm ">
                   Judul Laporan
                 </Label>
                 <Input
@@ -139,14 +138,11 @@ const LaporanMingguanPage = () => {
                   value={judul}
                   onChange={(e) => setJudul(e.target.value)}
                   disabled={uploading}
-                  className="mb-2 md:text-sm text-xs"
+                  className="md:text-sm text-xs bg-white"
                 />
               </div>
-              <div className="flex flex-col md:flex-row gap-2">
-                <Label
-                  htmlFor="file"
-                  className="md:text-base text-sm mb-2 md:w-2/3 w-full"
-                >
+              <div className="flex flex-col gap-2 mt-2">
+                <Label htmlFor="file" className="md:text-base text-sm ">
                   Masukkan File
                 </Label>
                 <Input
@@ -154,28 +150,26 @@ const LaporanMingguanPage = () => {
                   type="file"
                   onChange={handleFileChange}
                   disabled={uploading}
-                  className="md:text-sm text-xs"
+                  className="md:text-sm text-xs bg-white"
                 />
               </div>
               <Button
                 size="default"
-                className="bg-navy-200 hover:bg-navy-500 mt-2 md:text-base text-sm"
+                className="bg-navy-100 hover:bg-navy-500 mt-3 md:text-base text-sm"
                 onClick={handleUpload}
                 disabled={!file || !judul.trim() || uploading}
               >
                 {uploading ? "Uploading..." : "Upload"}
               </Button>
             </div>
-            <div className="flex items-end flex-1 max-w-xs">
-              <Label htmlFor="search" className="mb-2 invisible">
-                Cari Laporan
-              </Label>
-              <div className="relative w-full">
+            {/* Search */}
+            <div className="flex flex-col md:items-end items-end  justify-end md:w-1/2 w-full mt-4 md:mt-0">
+              <div className="flex relative w-full">
                 <Input
                   id="search"
                   type="search"
                   placeholder="Cari Laporan..."
-                  className="pr-10 md:text-sm text-xs"
+                  className="pr-10 md:text-sm text-xs bg-white"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />

@@ -1,9 +1,7 @@
-import RiwayatCutiPage from "@/components/riwayatCutiUsr";
+import RiwayatCutiPage from "@/components/user/riwayatCutiUsr";
 
-const RiwayatCutiUser = ( ) => {
-  return (
-    <RiwayatCutiPage />
-  )
-}
+const RiwayatCutiUser = () => {
+  return <RiwayatCutiPage />;
+};
 
 export default RiwayatCutiUser;

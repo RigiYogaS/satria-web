@@ -54,10 +54,10 @@ export async function GET(request: NextRequest) {
 // POST /api/cuti - Create leave request
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData(); // <--- Ganti dari request.json()
+    const formData = await request.formData(); 
     const user_id = formData.get("user_id");
     const alasan = formData.get("alasan");
-    const bukti_file = formData.get("bukti_file"); // File
+    const bukti_file = formData.get("bukti_file"); 
     const keterangan = formData.get("keterangan");
     const lebih_dari_sehari = formData.get("lebih_dari_sehari") === "true";
     const tgl_mulai = formData.get("tgl_mulai");
@@ -73,9 +73,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // (Opsional) Simpan file bukti ke disk/public/uploads jika perlu
-    // const bukti_file_path = bukti_file ? `/uploads/${bukti_file.name}` : "";
 
     const cuti = await prisma.cuti.create({
       data: {

@@ -7,6 +7,7 @@ import {
   FileBarChart,
   ChevronDown,
   ChevronRight,
+  LogOut,
 } from "lucide-react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 
@@ -18,15 +19,19 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 
 import Image from "next/image";
-
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 
 const AppSidebarAdmin = () => {
+  const { user, logout } = useAuth();
   const [managementOpen, setManagementOpen] = useState(false);
   const [laporanOpen, setLaporanOpen] = useState(false);
+  const [kelolaOpen, setKelolaOpen] = useState(false);
 
   return (
     <Sidebar
@@ -56,7 +61,7 @@ const AppSidebarAdmin = () => {
                   >
                     <Home />
                     <span className="group-data-[collapsible=icon]:hidden">
-                      Dashboard
+                      Beranda
                     </span>
                   </a>
                 </SidebarMenuButton>
@@ -80,7 +85,7 @@ const AppSidebarAdmin = () => {
                       <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
                         <Users />
                         <span className="group-data-[collapsible=icon]:hidden">
-                          Management
+                          Anggota
                         </span>
                       </div>
                       <span className="group-data-[collapsible=icon]:hidden">
@@ -95,7 +100,7 @@ const AppSidebarAdmin = () => {
                           href="/admin/users"
                           className="text-navy-600 hover:text-navy-800 text-sm"
                         >
-                          <span>User Management</span>
+                          <span>Daftar Anggota</span>
                         </a>
                       </SidebarMenuButton>
                       <SidebarMenuButton asChild size="sm">
@@ -103,7 +108,15 @@ const AppSidebarAdmin = () => {
                           href="/admin/approval"
                           className="text-navy-600 hover:text-navy-800 text-sm"
                         >
-                          <span>Approval Cuti</span>
+                          <span>Absensi Anggota</span>
+                        </a>
+                      </SidebarMenuButton>
+                      <SidebarMenuButton asChild size="sm">
+                        <a
+                          href="/admin/approval"
+                          className="text-navy-600 hover:text-navy-800 text-sm"
+                        >
+                          <span>Laporan Mingguan</span>
                         </a>
                       </SidebarMenuButton>
                     </div>
@@ -111,29 +124,48 @@ const AppSidebarAdmin = () => {
                 </Collapsible.Root>
               </SidebarMenuItem>
 
-              {/* Laporan dengan dropdown */}
+              {/* Daftar Cuti (Laporan) dengan href */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className="w-full text-navy-700 hover:text-navy-900 group-data-[collapsible=icon]:justify-center"
+                  tooltip="Daftar Cuti"
+                >
+                  <a
+                    href="/admin/cuti"
+                    className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center"
+                  >
+                    <FileBarChart />
+                    <span className="group-data-[collapsible=icon]:hidden">
+                      Daftar Cuti
+                    </span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Kelola dengan dropdown */}
               <SidebarMenuItem>
                 <Collapsible.Root
-                  open={laporanOpen}
-                  onOpenChange={setLaporanOpen}
+                  open={kelolaOpen}
+                  onOpenChange={setKelolaOpen}
                 >
                   <Collapsible.Trigger asChild>
                     <SidebarMenuButton
                       className={`w-full group-data-[collapsible=icon]:justify-center transition-colors ${
-                        laporanOpen
+                        kelolaOpen
                           ? "text-neutral-500 hover:text-neutral-600"
                           : "text-navy-700 hover:text-navy-900"
                       }`}
-                      tooltip="Laporan"
+                      tooltip="Kelola"
                     >
                       <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-                        <FileBarChart />
+                        <Settings />
                         <span className="group-data-[collapsible=icon]:hidden">
-                          Laporan
+                          Kelola
                         </span>
                       </div>
                       <span className="group-data-[collapsible=icon]:hidden">
-                        {laporanOpen ? <ChevronDown /> : <ChevronRight />}
+                        {kelolaOpen ? <ChevronDown /> : <ChevronRight />}
                       </span>
                     </SidebarMenuButton>
                   </Collapsible.Trigger>
@@ -141,47 +173,47 @@ const AppSidebarAdmin = () => {
                     <div className="ml-6 mt-1 space-y-1">
                       <SidebarMenuButton asChild size="sm">
                         <a
-                          href="/admin/laporan/absensi"
-                          className="text-navy-600 hover:text-navy-800 text-sm"
+                          href="/admin/data-admin"
+                          className="text-navy-600 hover:text-navy-800 text-sm bg-neutral-100 rounded"
                         >
-                          <span>Laporan Absensi</span>
+                          <span>Data Admin</span>
                         </a>
                       </SidebarMenuButton>
                       <SidebarMenuButton asChild size="sm">
                         <a
-                          href="/admin/laporan/kinerja"
+                          href="/admin/ip-lokasi"
                           className="text-navy-600 hover:text-navy-800 text-sm"
                         >
-                          <span>Laporan Kinerja</span>
+                          <span>IP dan Lokasi</span>
+                        </a>
+                      </SidebarMenuButton>
+                      <SidebarMenuButton asChild size="sm">
+                        <a
+                          href="/admin/bagian"
+                          className="text-navy-600 hover:text-navy-800 text-sm"
+                        >
+                          <span>Bagian</span>
                         </a>
                       </SidebarMenuButton>
                     </div>
                   </Collapsible.Content>
                 </Collapsible.Root>
               </SidebarMenuItem>
-
-              {/* Settings */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className="w-full text-navy-700 hover:text-navy-900 group-data-[collapsible=icon]:justify-center"
-                  tooltip="Settings"
-                >
-                  <a
-                    href="/admin/settings"
-                    className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center"
-                  >
-                    <Settings />
-                    <span className="group-data-[collapsible=icon]:hidden">
-                      Settings
-                    </span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter className="flex justify-center">
+        <Button
+          onClick={logout}
+          variant="outline"
+          className="w-2/3 flex mx-auto bg-red-200 text-white hover:bg-red-400 hover:text-white"
+        >
+          <LogOut className="group-data-[collapsible=icon]:block group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5 " />
+          <span className="group-data-[collapsible=icon]:hidden">Logout</span>
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   );
 };

@@ -27,7 +27,7 @@ import Image from "next/image";
 
 import { useAuth } from "@/hooks/useAuth";
 
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 
 const AppSidebarUser = () => {
   const { user, logout } = useAuth();
@@ -67,7 +67,7 @@ const AppSidebarUser = () => {
                   >
                     <Home />
                     <span className="group-data-[collapsible=icon]:hidden">
-                      Dashboard
+                      Beranda
                     </span>
                   </a>
                 </SidebarMenuButton>
@@ -192,7 +192,11 @@ const AppSidebarUser = () => {
       </SidebarContent>
 
       <SidebarFooter className="flex justify-center">
-        <Button onClick={logout} variant="outline" className="w-2/3 flex mx-auto bg-red-200 text-white hover:bg-red-400 hover:text-white">
+        <Button
+          onClick={logout}
+          variant="outline"
+          className="w-2/3 flex mx-auto bg-red-200 text-white hover:bg-red-400 hover:text-white"
+        >
           <LogOut className="group-data-[collapsible=icon]:block group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5 " />
           <span className="group-data-[collapsible=icon]:hidden">Logout</span>
         </Button>

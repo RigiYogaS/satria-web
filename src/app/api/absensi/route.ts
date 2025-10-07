@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -22,90 +22,104 @@ function getTodayRangeUTC() {
   return { startOfDay, endOfDay };
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { type, latitude, longitude, accuracy, laporanHarian, ipAddress } = body;
-
+    // Ambil userId dari session
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const userId = parseInt(session.user.id);
 
-    // Range hari ini UTC
-    const { startOfDay, endOfDay } = getTodayRangeUTC();
+    const body = await request.json();
+    const { type, ...data } = body;
+
+    // Ambil tanggal hari ini (tanpa jam)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     if (type === "checkin") {
-      // Cek sudah check-in hari ini
-      const existingCheckin = await prisma.absensi.findFirst({
+      // Cek sudah absen hari ini?
+      const existing = await prisma.absensi.findFirst({
         where: {
           user_id: userId,
-          tanggal: {
-            gte: startOfDay,
-            lt: endOfDay,
-          },
+          tanggal: today,
         },
       });
-
-      if (existingCheckin) {
+      if (existing) {
         return NextResponse.json(
           { error: "Sudah check-in hari ini" },
           { status: 400 }
         );
       }
 
-      const newAbsensi = await prisma.absensi.create({
+      // Tentukan status check-in
+      const now = new Date();
+      const jam = now.getHours();
+      const menit = now.getMinutes();
+      let checkin_status: "tepat_waktu" | "telat" = "telat";
+      if (jam < 8 || (jam === 8 && menit === 0)) checkin_status = "tepat_waktu";
+
+      // Simpan absensi baru
+      await prisma.absensi.create({
         data: {
           user_id: userId,
-          tanggal: new Date(), 
-          latitude: latitude ? parseFloat(latitude.toString()) : null,
-          longitude: longitude ? parseFloat(longitude.toString()) : null,
-          accuracy: accuracy ? parseFloat(accuracy.toString()) : null,
+          tanggal: today,
+          waktu: now,
+          lokasi: data.lokasi,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          accuracy: data.accuracy,
+          ip_address: data.ipAddress,
+          checkin_status,
           status: "Hadir",
-          ip_address: ipAddress || "", 
         },
       });
+      return NextResponse.json({ success: true });
+    }
 
-      return NextResponse.json({
-        success: true,
-        message: "Check-in berhasil",
-        data: { id: newAbsensi.id_absensi },
-      });
-    } else if (type === "checkout") {
-      const result = await prisma.absensi.updateMany({
+    if (type === "checkout") {
+      // Update absensi hari ini
+      const absensi = await prisma.absensi.findFirst({
         where: {
           user_id: userId,
-          tanggal: {
-            gte: startOfDay,
-            lt: endOfDay,
-          },
-          jam_checkout: null,
-        },
-        data: {
-          jam_checkout: new Date(),
-          laporan_harian: laporanHarian,
+          tanggal: today,
         },
       });
-
-      if (result.count === 0) {
+      if (!absensi) {
         return NextResponse.json(
-          { error: "Belum check-in atau sudah check-out" },
+          { error: "Belum check-in hari ini" },
+          { status: 400 }
+        );
+      }
+      if (absensi.jam_checkout) {
+        return NextResponse.json(
+          { error: "Sudah check-out hari ini" },
           { status: 400 }
         );
       }
 
-      return NextResponse.json({
-        success: true,
-        message: "Check-out berhasil",
+      const now = new Date();
+      const jam = now.getHours();
+
+      let checkout_status: "normal" | "lembur" | "setengah_hari" = "normal";
+      if (jam < 13) checkout_status = "setengah_hari";
+      else if (jam > 16) checkout_status = "lembur";
+
+      await prisma.absensi.update({
+        where: { id_absensi: absensi.id_absensi },
+        data: {
+          jam_checkout: now,
+          checkout_status,
+          laporan_harian: data.laporanHarian,
+        },
       });
+      return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json(
-      { error: "Invalid request type" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid type" }, { status: 400 });
   } catch (error) {
+    console.error("Error in absensi API:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -155,6 +169,7 @@ export async function GET() {
       nama_wifi: namaWifi,
     });
   } catch (error) {
+    console.error("Error in GET absensi:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

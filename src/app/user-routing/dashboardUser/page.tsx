@@ -1,12 +1,9 @@
 "use client";
 
-import DashboardUser from "@/components/dashboardUser";
+import DashboardUser from "@/components/user/dashboardUser";
 
 const DashboardPage = () => {
-  return (
-    <DashboardUser />
-  );
+  return <DashboardUser />;
 };
 
 export default DashboardPage;
-

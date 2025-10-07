@@ -2,11 +2,11 @@
 
 import { AlertCircle } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import AppSidebarUser from "@/components/app-sidebarUser";
+import AppSidebarUser from "@/components/user/app-sidebarUser";
 import AppBreadcrumb from "@/components/AppBreadcrumb";
-import AbsenCard from "./ui/absenCard";
-import StatusAbsen from "./ui/statusAbsen";
-import LaporanHarian, { LaporanHarianHandle } from "./ui/laporanHarian";
+import AbsenCard from "../ui/absenCard";
+import StatusAbsen from "../ui/statusAbsen";
+import LaporanHarian, { LaporanHarianHandle } from "../ui/laporanHarian";
 import { useState, useRef, useEffect } from "react";
 import {
   AlertDialog,
@@ -84,6 +84,8 @@ const AbsenToday = () => {
                 accuracy: absensi.absensi.accuracy,
                 ipAddress: absensi.absensi.ipAddress,
                 wifiName: absensi.absensi.namaWifi,
+                checkinStatus: absensi.absensi.checkinStatus,
+                checkoutStatus: absensi.absensi.checkoutStatus,
               }
             : null
         );
@@ -185,7 +187,7 @@ const AbsenToday = () => {
   };
 
   return (
-    <SidebarProvider className="font-montserrat bg-neutral-50">
+    <SidebarProvider className="font-montserrat bg-neutral-100">
       <AppSidebarUser />
       <main className="flex-1 p-6">
         <div className="flex items-center gap-3 mb-6">
@@ -195,12 +197,11 @@ const AbsenToday = () => {
 
         <div className="mt-4 space-y-6 ">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">Absensi Hari Ini</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">
+              Absensi Hari Ini
+            </h1>
             <div className="flex items-start gap-3 p-4 bg-amber-100 border border-amber-200 rounded-lg">
-              <AlertCircle
-                className="text-amber-700 mt-0.5 flex-shrink-0 md:size-6 size-4"
-                
-              />
+              <AlertCircle className="text-amber-700 mt-0.5 flex-shrink-0 md:size-6 size-4" />
               <p className="md:text-sm text-amber-700 text-xs">
                 Absensi hanya dapat dilakukan melalui jaringan WiFi kantor. Jika
                 menggunakan jaringan luar (seperti Telkomsel, Indosat, atau
@@ -268,10 +269,10 @@ const AbsenToday = () => {
 
           {!isLoadingAbsenStatus && isCheckedOut && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-              <h3 className="text-green-800 font-semibold text-lg mb-2">
+              <h3 className="text-green-800 font-semibold md:text-lg text-base mb-2">
                 🎉 Absensi Hari Ini Selesai!
               </h3>
-              <p className="text-green-700 text-sm">
+              <p className="text-green-700 md:text-sm text-xs">
                 Terima kasih telah menyelesaikan absensi dan laporan harian.
                 Semoga hari Anda menyenangkan!
               </p>

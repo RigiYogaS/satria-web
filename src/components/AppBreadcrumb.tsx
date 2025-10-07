@@ -23,7 +23,7 @@ const AppBreadcrumb = () => {
   // Mapping path ke breadcrumb items
   const getBreadcrumbItems = (path: string): BreadcrumbItemType[] => {
     if (path === "/dashboard" || path === "/") {
-      return [{ label: "Dashboard", isActive: true }];
+      return [{ label: "Beranda", isActive: true }];
     }
 
     if (path.startsWith("/user-routing/absensi/hari-ini")) {
@@ -59,12 +59,12 @@ const AppBreadcrumb = () => {
     }
 
     if (path.startsWith("/user-routing/dashboardUser")) {
-      return [{ label: "Dashboard", isActive: true }];
+      return [{ label: "Beranda", isActive: true }];
     }
 
     // Admin paths
-    if (path.startsWith("/admin/dashboard")) {
-      return [{ label: "Dashboard", isActive: true }];
+    if (path.startsWith("/admin-routing/dashboard")) {
+      return [{ label: "Beranda", isActive: true }];
     }
 
     if (path.startsWith("/admin/users")) {

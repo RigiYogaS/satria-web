@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, MapPin, Wifi, CircleAlert } from "lucide-react";
+import { Clock, MapPin, Wifi, CircleAlert, Loader } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface LocationCardProps {
@@ -10,6 +10,8 @@ interface LocationCardProps {
   currentIP?: string;
   wifiName?: string;
   isCheckedOut?: boolean;
+  checkinStatus?: "tepat_waktu" | "telat";
+  checkoutStatus?: "normal" | "lembur" | "setengah_hari";
 }
 
 const LocationCard = ({
@@ -19,6 +21,8 @@ const LocationCard = ({
   currentIP = "",
   wifiName: wifiNameProp = "",
   isCheckedOut = false,
+  checkinStatus,
+  checkoutStatus,
 }: LocationCardProps) => {
   const [wifiName, setWifiName] = useState<string>(wifiNameProp);
 
@@ -44,7 +48,7 @@ const LocationCard = ({
   }, [wifiNameProp, currentIP]);
 
   return (
-    <div className="bg-white rounded-lg shadow-md border p-6 mx-auto w-full h-[620px] flex flex-col justify-between">
+    <div className="bg-white rounded-lg shadow-md border p-6 mx-auto w-full md:h-[620px] h-[400px] flex flex-col justify-between">
       <div className="flex-1 overflow-y-auto">
         <h2 className="md:text-3xl text-2xl font-bold text-navy-500 text-center">
           Status Absensi
@@ -90,6 +94,53 @@ const LocationCard = ({
           <span className="md:text-sm text-xs text-neutral-700 leading-relaxed">
             {wifiName ? <span>{wifiName}</span> : <span>Tidak terdeteksi</span>}
           </span>
+        </div>
+
+        {/* Status Check-in and Check-out */}
+        <div className="flex items-start mt-4">
+          <Loader className="mr-2 mt-1 flex-shrink-0 text-navy-500 md:size-10 size-6" />
+          <div>
+            <span className="md:text-sm text-xs text-neutral-700 leading-relaxed block">
+              Status Check-in:{" "}
+              <span
+                className={
+                  checkinStatus === "tepat_waktu"
+                    ? "bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold"
+                    : checkinStatus === "telat"
+                    ? "bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded font-semibold"
+                    : "bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
+                }
+              >
+                {checkinStatus === "tepat_waktu"
+                  ? "Tepat Waktu"
+                  : checkinStatus === "telat"
+                  ? "Terlambat"
+                  : "-"}
+              </span>
+            </span>
+            <span className="md:text-sm text-xs text-neutral-700 leading-relaxed block mt-2">
+              Status Check-out:{" "}
+              <span
+                className={
+                  checkoutStatus === "setengah_hari"
+                    ? "bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded font-semibold"
+                    : checkoutStatus === "lembur"
+                    ? "bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold"
+                    : checkoutStatus === "normal"
+                    ? "bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold"
+                    : "bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
+                }
+              >
+                {checkoutStatus === "setengah_hari"
+                  ? "Setengah Hari"
+                  : checkoutStatus === "lembur"
+                  ? "Lembur"
+                  : checkoutStatus === "normal"
+                  ? "Normal"
+                  : "-"}
+              </span>
+            </span>
+          </div>
         </div>
       </div>
 

@@ -18,8 +18,8 @@ model Users {
   otp_expires_at DateTime?
   created_at     DateTime   @default(now())
   updated_at     DateTime   @default(now())
-  role           String
-  status         String @default("PENDING")
+  role           Role
+  status         UserStatus @default(PENDING)
   absensi        Absensi[]
   cuti           Cuti[]
   laporan        Laporan[]
@@ -29,20 +29,23 @@ model Users {
 }
 
 model Absensi {
-  id_absensi      Int           @id @default(autoincrement())
+  id_absensi      Int              @id @default(autoincrement())
   user_id         Int   
-  tanggal         DateTime      @db.Date
-  waktu           DateTime      @default(now())
+  tanggal         DateTime         @db.Date
+  waktu           DateTime         @default(now())
   ip_address      String?
   keterangan      String?
-  created_at      DateTime      @default(now())
-  status          AbsensiStatus
+  created_at      DateTime         @default(now())
+  status          AbsensiStatus    @default(Hadir)
   latitude        Decimal?
   longitude       Decimal?
   accuracy        Decimal?
-  jam_checkout    DateTime?
-  laporan_harian  String?
-  user            Users         @relation(fields: [user_id], references: [id_user], onDelete: Cascade)
+  lokasi          String?          
+  jam_checkout    DateTime?        
+  laporan_harian  String?          
+  checkin_status  CheckinStatus?   // ubah jadi enum
+  checkout_status CheckoutStatus?  // ubah jadi enum
+  user            Users            @relation(fields: [user_id], references: [id_user], onDelete: Cascade)
 
   @@map("absensi")
 }
@@ -96,9 +99,6 @@ model Divisi {
 
 enum AbsensiStatus {
   Hadir
-  Telat
-  Izin
-  Alpha
 }
 
 enum CutiStatus {
@@ -117,3 +117,15 @@ enum UserStatus {
   ACTIVE
   INACTIVE
 }
+
+enum CheckinStatus {
+  tepat_waktu
+  telat
+}
+
+enum CheckoutStatus {
+  normal
+  lembur
+  setengah_hari
+}
+

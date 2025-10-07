@@ -119,6 +119,14 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
   };
 
   // Validation handlers
+  // Tambahkan fungsi untuk cek status check-in
+  const getCheckinStatus = (date: Date): "tepat_waktu" | "telat" => {
+    const jam = date.getHours();
+    const menit = date.getMinutes();
+    if (jam < 8 || (jam === 8 && menit === 0)) return "tepat_waktu";
+    return "telat";
+  };
+
   const handleCheckIn = async (): Promise<void> => {
     if (loading) return;
 
@@ -175,6 +183,8 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
       return;
     }
 
+    const checkinStatus = currentTime ? getCheckinStatus(currentTime) : "telat";
+
     // Pastikan jamKeluar selalu ada (walau kosong)
     const absenData: AbsenData = {
       jamDatang: currentTime ? currentTime.toISOString() : "",
@@ -185,9 +195,19 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
       longitude: location.longitude,
       accuracy: location.accuracy,
       ipAddress: currentIP || "",
+      checkinStatus,
     };
 
     await onCheckIn?.(absenData);
+  };
+
+  const getCheckoutStatus = (
+    date: Date
+  ): "normal" | "lembur" | "setengah_hari" => {
+    const jam = date.getHours();
+    if (jam < 13) return "setengah_hari";
+    if (jam > 16) return "lembur";
+    return "normal";
   };
 
   const handleCheckOut = async (): Promise<void> => {
@@ -211,6 +231,10 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
       return;
     }
 
+    const checkoutStatus = currentTime
+      ? getCheckoutStatus(currentTime)
+      : "normal";
+
     // Pastikan jamDatang selalu ada (walau kosong)
     const absenData: AbsenData = {
       jamDatang: "",
@@ -220,6 +244,7 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
       latitude: location.latitude,
       longitude: location.longitude,
       accuracy: location.accuracy,
+      checkoutStatus,
     };
 
     await onCheckOut?.(absenData);
@@ -379,7 +404,7 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
     <div
       className={`bg-white w-full mx-auto p-6 rounded-lg shadow-md flex flex-col gap-6 border ${
         cardState === "checkedOut" ? "opacity-75 pointer-events-none" : ""
-      } h-[620px] justify-between`}
+      } md:h-[620px] h-[400px] justify-between`}
     >
       <div className="flex-1 overflow-y-auto">
         <div className="text-center">

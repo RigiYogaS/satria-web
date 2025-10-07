@@ -2,17 +2,7 @@
 
 import { forwardRef, useImperativeHandle, useState, useEffect } from "react";
 import LocationCard from "./locationCard";
-
-interface AbsenData {
-  jamDatang: string;
-  jamKeluar?: string;
-  tanggal: string;
-  lokasi?: string;
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-  ipAddress?: string;
-}
+import { AbsenData } from "@/types/absen";
 
 interface StatusAbsenHandle {
   triggerCheckIn: (absenData: AbsenData) => void;
@@ -47,9 +37,8 @@ const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
         setCheckoutLocationName("");
       },
       triggerCheckOut: (data: AbsenData) => {
-        setCurrentCheckOutTime(data.jamDatang);
+        setCurrentCheckOutTime(data.jamDatang ?? "--.--.--");
         setLocalCheckedOut(true);
-        // Reverse geocoding untuk nama lokasi checkout
         if (data.latitude && data.longitude) {
           getRealLocationName(data.latitude, data.longitude).then(
             setCheckoutLocationName
@@ -133,6 +122,9 @@ const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
         lokasi={locationName}
         currentIP={absenData?.ipAddress}
         wifiName={wifiName}
+        isCheckedOut={isCheckedOut}
+        checkinStatus={absenData?.checkinStatus} 
+        checkoutStatus={absenData?.checkoutStatus} 
       />
     );
   }
