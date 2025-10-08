@@ -89,7 +89,6 @@ const LaporanMingguanPage = () => {
     formData.append("file", file);
     formData.append("judul", judul);
     formData.append("user_id", session.user.id);
-    formData.append("file_path", `/uploads/${file.name}`);
 
     try {
       const res = await fetch("/api/laporan", {

@@ -24,7 +24,6 @@ function getTodayRangeUTC() {
 
 export async function POST(request: NextRequest) {
   try {
-    // Ambil userId dari session
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -37,13 +36,19 @@ export async function POST(request: NextRequest) {
     // Ambil tanggal hari ini (tanpa jam)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const startOfDay = new Date(today);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
 
     if (type === "checkin") {
       // Cek sudah absen hari ini?
       const existing = await prisma.absensi.findFirst({
         where: {
           user_id: userId,
-          tanggal: today,
+          tanggal: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
         },
       });
       if (existing) {
@@ -64,7 +69,7 @@ export async function POST(request: NextRequest) {
       await prisma.absensi.create({
         data: {
           user_id: userId,
-          tanggal: today,
+          tanggal: startOfDay,
           waktu: now,
           lokasi: data.lokasi,
           latitude: data.latitude,
@@ -83,7 +88,10 @@ export async function POST(request: NextRequest) {
       const absensi = await prisma.absensi.findFirst({
         where: {
           user_id: userId,
-          tanggal: today,
+          tanggal: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
         },
       });
       if (!absensi) {

@@ -21,7 +21,6 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 import {
   AlertDialog,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -70,22 +69,9 @@ const PengajuanCutiPage = () => {
     }
     setLoading(true);
 
-    let filePath = "";
-    if (file) {
-      const uploadData = new FormData();
-      uploadData.append("file", file);
-      const uploadRes = await fetch("/api/cuti/upload", {
-        method: "POST",
-        body: uploadData,
-      });
-      const uploadJson = await uploadRes.json();
-      filePath = uploadJson.filePath; // contoh: "/uploads/namafile.pdf"
-    }
-
     const tglSelesai =
       lebihSehari === "ya" ? new Date(dateRange.to) : new Date(dateRange.from);
 
-    // Format tanggal ke format YYYY-MM-DD untuk menghindari masalah timezone
     const formatDateForDB = (date: Date) => {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -103,7 +89,7 @@ const PengajuanCutiPage = () => {
     formData.append("tgl_mulai", formatDateForDB(dateRange.from));
     formData.append("tgl_selesai", formatDateForDB(tglSelesai));
     formData.append("keterangan", keterangan);
-    if (filePath) formData.append("bukti_file", filePath);
+    if (file) formData.append("file", file);
 
     try {
       const res = await fetch("/api/cuti", {

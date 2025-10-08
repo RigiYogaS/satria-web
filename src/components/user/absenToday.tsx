@@ -55,15 +55,15 @@ const AbsenToday = () => {
       const result = await response.json();
       if (result && result.success && result.data) {
         const absensi = result.data;
-        setIsCheckedIn(!!absensi.hasCheckedIn);
-        setIsCheckedOut(!!absensi.hasCheckedOut);
+        setIsCheckedIn(Boolean(absensi.hasCheckedIn));
+        setIsCheckedOut(Boolean(absensi.hasCheckedOut));
         setCheckInTime(
-          absensi.absensi && absensi.absensi.waktu
+          absensi.absensi?.waktu
             ? new Date(absensi.absensi.waktu).toLocaleTimeString("id-ID")
             : ""
         );
         setCheckOutTime(
-          absensi.absensi && absensi.absensi.checkoutTime
+          absensi.absensi?.checkoutTime
             ? new Date(absensi.absensi.checkoutTime).toLocaleTimeString("id-ID")
             : ""
         );
@@ -78,14 +78,14 @@ const AbsenToday = () => {
                   ? formatToHourMinute(absensi.absensi.checkoutTime)
                   : "",
                 tanggal: absensi.absensi.waktu,
-                lokasi: absensi.absensi.lokasi,
-                latitude: absensi.absensi.latitude,
-                longitude: absensi.absensi.longitude,
-                accuracy: absensi.absensi.accuracy,
-                ipAddress: absensi.absensi.ipAddress,
-                wifiName: absensi.absensi.namaWifi,
-                checkinStatus: absensi.absensi.checkinStatus,
-                checkoutStatus: absensi.absensi.checkoutStatus,
+                lokasi: absensi.absensi.lokasi || "",
+                latitude: absensi.absensi.latitude || "",
+                longitude: absensi.absensi.longitude || "",
+                accuracy: absensi.absensi.accuracy || "",
+                ipAddress: absensi.absensi.ipAddress || "",
+                wifiName: absensi.absensi.namaWifi || "",
+                checkinStatus: absensi.absensi.checkinStatus || "",
+                checkoutStatus: absensi.absensi.checkoutStatus || "",
               }
             : null
         );
@@ -96,6 +96,7 @@ const AbsenToday = () => {
         setCheckInTime("");
         setCheckOutTime("");
         setAbsenDataFromAPI(null);
+        setWifiName("");
         console.log("RESET STATE: isCheckedIn", false, "isCheckedOut", false);
       }
     } finally {
@@ -132,7 +133,7 @@ const AbsenToday = () => {
         alert(result.error || "Gagal check-in");
         return;
       }
-      // Tunggu fetch status absensi selesai sebelum setLoading(false)
+
       await checkTodayAbsensiStatus();
     } finally {
       setLoading(false);

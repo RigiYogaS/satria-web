@@ -63,35 +63,53 @@ const AppBreadcrumb = () => {
     }
 
     // Admin paths
-    if (path.startsWith("/admin-routing/dashboard")) {
+    if (path.startsWith("/admin-routing/dashboardAdmin")) {
       return [{ label: "Beranda", isActive: true }];
     }
 
-    if (path.startsWith("/admin/users")) {
+    if (path.startsWith("/admin-routing/anggota/daftar-anggota")) {
       return [
-        { label: "Management", href: "/admin/management" },
-        { label: "User Management", isActive: true },
+        { label: "Anggota", href: "/admin-routing/anggota/daftar-anggota" },
+        { label: "Daftar Anggota", isActive: true },
       ];
     }
 
-    if (path.startsWith("/admin/approval")) {
+    if (path.startsWith("/admin-routing/anggota/absensi-anggota")) {
       return [
-        { label: "Management", href: "/admin/management" },
-        { label: "Approval Cuti", isActive: true },
+        { label: "Anggota", href: "/admin-routing/anggota/daftar-anggota" },
+        { label: "Absensi Anggota", isActive: true },
       ];
     }
 
-    if (path.startsWith("/admin/laporan/absensi")) {
+    if (path.startsWith("/admin-routing/anggota/laporan-mingguan")) {
       return [
-        { label: "Laporan", href: "/admin/laporan" },
-        { label: "Laporan Absensi", isActive: true },
+        { label: "Anggota", href: "/admin-routing/anggota/daftar-anggota" },
+        { label: "Laporan Mingguan", isActive: true },
       ];
     }
 
-    if (path.startsWith("/admin/laporan/kinerja")) {
+    if (path.startsWith("/admin-routing/cuti")) {
+      return [{ label: "Daftar Cuti", isActive: true }];
+    }
+
+    if (path.startsWith("/admin-routing/kelola/data-admin")) {
       return [
-        { label: "Laporan", href: "/admin/laporan" },
-        { label: "Laporan Kinerja", isActive: true },
+        { label: "Kelola", href: "/admin-routing/kelola/data-admin" },
+        { label: "Data Admin", isActive: true },
+      ];
+    }
+
+    if (path.startsWith("/admin-routing/kelola/ip-lokasi")) {
+      return [
+        { label: "Kelola", href: "/admin-routing/kelola/data-admin" },
+        { label: "IP dan Lokasi", isActive: true },
+      ];
+    }
+
+    if (path.startsWith("/admin-routing/kelola/bagian")) {
+      return [
+        { label: "Kelola", href: "/admin-routing/kelola/data-admin" },
+        { label: "Bagian", isActive: true },
       ];
     }
 

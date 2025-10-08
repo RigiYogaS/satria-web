@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import fs from "fs";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
 
 // GET /api/cuti - Get all leave requests
 export async function GET(request: NextRequest) {
@@ -51,13 +54,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/cuti - Create leave request
+// POST /api/cuti
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData(); 
+    const formData = await request.formData();
     const user_id = formData.get("user_id");
     const alasan = formData.get("alasan");
-    const bukti_file = formData.get("bukti_file"); 
+    const file = formData.get("file");
     const keterangan = formData.get("keterangan");
     const lebih_dari_sehari = formData.get("lebih_dari_sehari") === "true";
     const tgl_mulai = formData.get("tgl_mulai");
@@ -74,11 +77,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let filePath = "";
+    if (file instanceof File) {
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const uploadsDir = path.join(process.cwd(), "public", "uploads", "cuti");
+      if (!fs.existsSync(uploadsDir))
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      const ext = path.extname(file.name);
+      const base = path.basename(file.name, ext);
+      const uniqueName = `${base}_${Date.now()}_${uuidv4()}${ext}`;
+      filePath = `/uploads/cuti/${uniqueName}`;
+      fs.writeFileSync(path.join(uploadsDir, uniqueName), buffer);
+    }
+
     const cuti = await prisma.cuti.create({
       data: {
         user_id: parseInt(user_id.toString()),
         alasan: alasan.toString(),
-        bukti_file: bukti_file instanceof File ? bukti_file.name : "",
+        bukti_file: filePath,
         keterangan: keterangan?.toString() ?? "",
         lebih_dari_sehari,
         tgl_mulai: new Date(tgl_mulai.toString()),

@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   }
   const userId = parseInt(session.user.id);
 
-  // Ambil absensi hari ini
+  // Ambil absensi hari ini (reset otomatis setiap hari)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const startOfDay = new Date(today);
@@ -41,7 +41,7 @@ export async function GET(req: Request) {
             longitude: absensi.longitude,
             accuracy: absensi.accuracy,
             ipAddress: absensi.ip_address,
-            namaWifi: undefined, // isi jika ada
+            namaWifi: undefined,
             checkinStatus: absensi.checkin_status,
             checkoutStatus: absensi.checkout_status,
           }
@@ -69,6 +69,31 @@ export async function POST(req: Request) {
   let checkin_status: "tepat_waktu" | "telat" = "telat";
   if (jam < 8 || (jam === 8 && menit === 0)) checkin_status = "tepat_waktu";
 
+  // Cegah check-in dobel di hari yang sama
+  const existing = await prisma.absensi.findFirst({
+    where: {
+      user_id: userId,
+      tanggal: {
+        gte: tanggal,
+        lte: new Date(
+          tanggal.getFullYear(),
+          tanggal.getMonth(),
+          tanggal.getDate(),
+          23,
+          59,
+          59,
+          999
+        ),
+      },
+    },
+  });
+  if (existing) {
+    return NextResponse.json(
+      { error: "Sudah check-in hari ini" },
+      { status: 400 }
+    );
+  }
+
   // Simpan ke database
   await prisma.absensi.create({
     data: {
@@ -80,7 +105,7 @@ export async function POST(req: Request) {
       longitude,
       accuracy,
       ip_address: ipAddress,
-      checkin_status, // <-- tambahkan ini!
+      checkin_status,
     },
   });
 

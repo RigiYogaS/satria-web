@@ -1,6 +1,8 @@
+import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
+import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
 
 // GET /api/laporan - Get all reports
 export async function GET(request: NextRequest) {
@@ -57,7 +59,6 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File;
     const user_id = formData.get("user_id");
     const judul = formData.get("judul");
-    const file_path = formData.get("file_path")?.toString() || "";
 
     if (!file || !user_id || !judul) {
       return NextResponse.json(
@@ -69,12 +70,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Tambahkan setelah validasi
+    // Simpan file ke uploads/laporanMingguan dengan nama unik
+    const ext = path.extname(file.name);
+    const base = path.basename(file.name, ext);
+    const uniqueName = `${base}_${Date.now()}_${uuidv4()}${ext}`;
+    const uploadsDir = path.join(
+      process.cwd(),
+      "public",
+      "uploads",
+      "laporanMingguan"
+    );
+    if (!fs.existsSync(uploadsDir))
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    const filePath = `/uploads/laporanMingguan/${uniqueName}`;
+    fs.writeFileSync(
+      path.join(uploadsDir, uniqueName),
+      Buffer.from(await file.arrayBuffer())
+    );
+
+    // Simpan path ke database
     const laporan = await prisma.laporan.create({
       data: {
         user_id: Number(user_id),
         judul: judul.toString(),
-        file_path, 
+        file_path: filePath,
         tanggal_upload: new Date(),
       },
     });

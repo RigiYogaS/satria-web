@@ -56,7 +56,7 @@ const AppSidebarAdmin = () => {
                   tooltip="Dashboard"
                 >
                   <a
-                    href="/admin/dashboard"
+                    href="/admin-routing/dashboardAdmin"
                     className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center"
                   >
                     <Home />
@@ -67,7 +67,7 @@ const AppSidebarAdmin = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Management dengan dropdown */}
+              {/* Anggota dengan dropdown */}
               <SidebarMenuItem>
                 <Collapsible.Root
                   open={managementOpen}
@@ -97,7 +97,7 @@ const AppSidebarAdmin = () => {
                     <div className="ml-6 mt-1 space-y-1">
                       <SidebarMenuButton asChild size="sm">
                         <a
-                          href="/admin/users"
+                          href="/admin-routing/anggota/daftar-anggota"
                           className="text-navy-600 hover:text-navy-800 text-sm"
                         >
                           <span>Daftar Anggota</span>
@@ -105,7 +105,7 @@ const AppSidebarAdmin = () => {
                       </SidebarMenuButton>
                       <SidebarMenuButton asChild size="sm">
                         <a
-                          href="/admin/approval"
+                          href="/admin-routing/anggota/absensi-anggota"
                           className="text-navy-600 hover:text-navy-800 text-sm"
                         >
                           <span>Absensi Anggota</span>
@@ -113,7 +113,7 @@ const AppSidebarAdmin = () => {
                       </SidebarMenuButton>
                       <SidebarMenuButton asChild size="sm">
                         <a
-                          href="/admin/approval"
+                          href="/admin-routing/anggota/laporan-mingguan"
                           className="text-navy-600 hover:text-navy-800 text-sm"
                         >
                           <span>Laporan Mingguan</span>
@@ -124,7 +124,7 @@ const AppSidebarAdmin = () => {
                 </Collapsible.Root>
               </SidebarMenuItem>
 
-              {/* Daftar Cuti (Laporan) dengan href */}
+              {/* Daftar Cuti */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
@@ -132,7 +132,7 @@ const AppSidebarAdmin = () => {
                   tooltip="Daftar Cuti"
                 >
                   <a
-                    href="/admin/cuti"
+                    href="/admin-routing/cuti"
                     className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center"
                   >
                     <FileBarChart />
@@ -173,15 +173,15 @@ const AppSidebarAdmin = () => {
                     <div className="ml-6 mt-1 space-y-1">
                       <SidebarMenuButton asChild size="sm">
                         <a
-                          href="/admin/data-admin"
-                          className="text-navy-600 hover:text-navy-800 text-sm bg-neutral-100 rounded"
+                          href="/admin-routing/kelola/data-admin"
+                          className="text-navy-600 hover:text-navy-800 text-sm rounded"
                         >
                           <span>Data Admin</span>
                         </a>
                       </SidebarMenuButton>
                       <SidebarMenuButton asChild size="sm">
                         <a
-                          href="/admin/ip-lokasi"
+                          href="/admin-routing/kelola/ip-lokasi"
                           className="text-navy-600 hover:text-navy-800 text-sm"
                         >
                           <span>IP dan Lokasi</span>
@@ -189,7 +189,7 @@ const AppSidebarAdmin = () => {
                       </SidebarMenuButton>
                       <SidebarMenuButton asChild size="sm">
                         <a
-                          href="/admin/bagian"
+                          href="/admin-routing/kelola/bagian"
                           className="text-navy-600 hover:text-navy-800 text-sm"
                         >
                           <span>Bagian</span>
