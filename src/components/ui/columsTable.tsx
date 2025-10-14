@@ -3,6 +3,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
+import { Pen, Trash } from "lucide-react";
 
 export const columnsCuti: ColumnDef<any, any>[] = [
   {
@@ -72,7 +73,7 @@ export const columnsCuti: ColumnDef<any, any>[] = [
         })}
       </span>
     ),
-  },
+  }
 ];
 
 // Struktur data absensi
@@ -213,5 +214,61 @@ export const columns: ColumnDef<AbsensiData>[] = [
         </Badge>
       );
     },
+  },
+];
+
+// Struktur data user/anggota
+export type UserData = {
+  id_user: number;
+  nama: string;
+  email: string;
+  jabatan: string;
+  bagian: string;
+};
+
+// Kolom untuk tabel user/anggota
+export const columnsUser = (
+  handleEdit: (row: UserData) => void,
+  handleDelete: (row: UserData) => void
+): ColumnDef<UserData>[] => [
+  {
+    accessorKey: "nama",
+    header: "Nama",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "jabatan",
+    header: "Jabatan",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "bagian",
+    header: "Bagian",
+    cell: (info) => info.getValue(),
+  },
+  {
+    id: "actions",
+    header: "Action",
+    cell: ({ row }) => (
+      <div className="flex items-center justify-center gap-2">
+        <button
+          className="text-blue-500 hover:text-blue-700"
+          title="Edit"
+          onClick={() => handleEdit(row.original)}
+          type="button"
+        >
+          <Pen size={18} />
+        </button>
+        <button
+          className="text-red-500 hover:text-red-700"
+          title="Delete"
+          onClick={() => handleDelete(row.original)}
+          type="button"
+        >
+          <Trash size={18} />
+        </button>
+      </div>
+    ),
+    enableSorting: false,
   },
 ];

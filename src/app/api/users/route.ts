@@ -1,10 +1,7 @@
-import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
-import { getUsers, createUser } from "@/services/user";
 import bcrypt from "bcryptjs";
 import { generateOTP, sendOTPEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "@/lib/auth";
 
 // Fungsi validasi password
 function validatePassword(password: string): {
@@ -16,19 +13,15 @@ function validatePassword(password: string): {
   if (password.length < 8) {
     errors.push("minimal 8 karakter");
   }
-
   if (!/[A-Z]/.test(password)) {
     errors.push("minimal 1 huruf besar");
   }
-
   if (!/[a-z]/.test(password)) {
     errors.push("minimal 1 huruf kecil");
   }
-
   if (!/[0-9]/.test(password)) {
     errors.push("minimal 1 angka");
   }
-
   if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
     errors.push("minimal 1 karakter khusus");
   }
@@ -39,30 +32,40 @@ function validatePassword(password: string): {
   };
 }
 
+// GET /api/users - Daftar anggota (nama, jabatan, bagian)
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "10");
-  const skip = (page - 1) * limit;
-  const absensi = await prisma.absensi.findMany({
-    where: { user_id: Number(session.user.id) },
-    orderBy: { tanggal: "desc" },
-    skip,
-    take: limit,
+  const users = await prisma.users.findMany({
+    select: {
+      id_user: true,
+      nama: true,
+      jabatan: true,
+      divisi: {
+        select: {
+          nama_divisi: true,
+        },
+      },
+    },
+    orderBy: { nama: "asc" },
   });
-  return NextResponse.json(absensi);
+
+  // Mapping agar bagian = divisi.nama
+  const result = users.map((user) => ({
+    id_user: user.id_user,
+    nama: user.nama,
+    jabatan: user.jabatan,
+    bagian: user.divisi?.nama_divisi || "-",
+  }));
+
+  return NextResponse.json(result);
 }
 
+// POST /api/users - Registrasi user baru
 export async function POST(request: Request) {
   let divisi_id_submitted: any = null;
 
   try {
     const body = await request.json();
-    const { email, nama, jabatan, divisi_id, password, role } = body;
+    const { email, nama, jabatan, divisi_id, password, role, fromAdmin } = body;
     divisi_id_submitted = divisi_id;
 
     if (!email || !nama || !jabatan || !divisi_id || !password) {
@@ -109,6 +112,32 @@ export async function POST(request: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Jika dari admin, status langsung ACTIVE dan tanpa OTP
+    if (fromAdmin) {
+      const user = await prisma.users.create({
+        data: {
+          email: email.toLowerCase().trim(),
+          nama: nama.trim(),
+          jabatan: jabatan.trim(),
+          divisi_id: parseInt(divisi_id),
+          password: hashedPassword,
+          role: role || "pegawai",
+          status: "ACTIVE",
+        },
+      });
+
+      const { password: _, ...userWithoutPassword } = user as any;
+
+      return NextResponse.json(
+        {
+          message: "Anggota berhasil ditambahkan & langsung aktif.",
+          user: userWithoutPassword,
+        },
+        { status: 201 }
+      );
+    }
+
+    // Jika bukan dari admin, proses OTP seperti biasa
     // Generate OTP
     const otp = generateOTP();
     const otpExpires = new Date();
@@ -116,40 +145,31 @@ export async function POST(request: Request) {
       otpExpires.getMinutes() + parseInt(process.env.OTP_EXPIRY_MINUTES || "15")
     );
 
-    // Buat  baru dengan status pending
-    const useuserr = await createUser({
-      email: email.toLowerCase().trim(),
-      nama: nama.trim(),
-      jabatan: jabatan.trim(),
-      divisi_id: parseInt(divisi_id),
-      password: hashedPassword,
-      role: role || "pegawai",
-      status: "PENDING", // UPPERCASE to match database
-      otp_code: otp,
-      otp_expires_at: otpExpires,
+    // Buat user baru dengan status pending
+    const user = await prisma.users.create({
+      data: {
+        email: email.toLowerCase().trim(),
+        nama: nama.trim(),
+        jabatan: jabatan.trim(),
+        divisi_id: parseInt(divisi_id),
+        password: hashedPassword,
+        role: role || "pegawai",
+        status: "PENDING",
+        otp_code: otp,
+        otp_expires_at: otpExpires,
+      },
     });
 
     // Kirim email OTP
-    console.log(`📧 Attempting to send OTP email to ${email}...`);
     const emailSent = await sendOTPEmail(email, nama, otp);
-
-    if (!emailSent) {
-      // Jika gagal kirim email, tetap return success tapi dengan pesan
-      console.warn(`❌ Failed to send OTP email to ${email}`);
-      console.warn(
-        `📝 User created successfully, but email notification failed`
-      );
-    } else {
-      console.log(`✅ OTP email sent successfully to ${email}`);
-    }
 
     // Return user tanpa password dan OTP
     const {
       password: _,
       otp_code: __,
-      otp_expires: ___,
+      otp_expires_at: ___,
       ...userWithoutSensitiveData
-    } = useuserr as any;
+    } = user as any;
 
     return NextResponse.json(
       {
@@ -161,8 +181,6 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("Error creating user:", error);
-
     // Handle foreign key constraint error
     if (error.code === "P2003" && error.meta?.field_name === "divisi_id") {
       return NextResponse.json(
@@ -183,6 +201,55 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { error: "Terjadi kesalahan server: " + error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// UPDATE user
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await request.json();
+    const { nama, email, password, jabatan, divisi_id } = body;
+
+    // Siapkan objek data update
+    const dataToUpdate: any = {};
+    if (nama) dataToUpdate.nama = nama;
+    if (email) dataToUpdate.email = email;
+    if (jabatan) dataToUpdate.jabatan = jabatan;
+    if (divisi_id) dataToUpdate.divisi_id = parseInt(divisi_id);
+
+    if (password) {
+      dataToUpdate.password = await bcrypt.hash(password, 12);
+    }
+
+    const updated = await prisma.users.update({
+      where: { id_user: Number(params.id) },
+      data: dataToUpdate,
+    });
+
+    return NextResponse.json({ success: true, user: updated });
+  } catch (error) {
+    return NextResponse.json({ error: "Gagal update user" }, { status: 500 });
+  }
+}
+
+// DELETE user
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await prisma.users.delete({
+      where: { id_user: Number(params.id) },
+    });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Gagal menghapus user" },
       { status: 500 }
     );
   }

@@ -35,8 +35,15 @@ const AlertUsage: React.FC<AlertUsageProps> = ({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          {/* <AlertDialogCancel onClick={onCancel}>Batal</AlertDialogCancel> */}
-          <AlertDialogAction onClick={onConfirm}>Kembali</AlertDialogAction>
+          <AlertDialogCancel onClick={onCancel ?? (() => onOpenChange(false))}>
+            Kembali
+          </AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-red-600 hover:bg-red-700 text-white"
+            onClick={onConfirm}
+          >
+            Oke, Hapus
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

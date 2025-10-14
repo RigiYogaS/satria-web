@@ -37,7 +37,6 @@ export async function GET(
           take: 10,
         },
       },
-      
     });
 
     if (!user) {
@@ -69,134 +68,48 @@ export async function GET(
   }
 }
 
-// PUT /api/users/[id] - Update specific user
+// UPDATE user
 export async function PUT(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const userId = parseInt(params.id);
     const body = await request.json();
-    const { nama, email, password, jabatan, divisi_id, role } = body;
+    const { nama, email, password, jabatan, divisi_id } = body;
 
-    if (!userId || isNaN(userId)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid user ID",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if user exists
-    const existingUser = await prisma.users.findUnique({
-      where: { id_user: userId },
-    });
-
-    if (!existingUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "User not found",
-        },
-        { status: 404 }
-      );
-    }
-
-    // Prepare update data
-    const updateData: Record<string, unknown> = {
-      updated_at: new Date(),
-    };
-
-    if (nama) updateData.nama = nama;
-    if (email) updateData.email = email;
-    if (jabatan) updateData.jabatan = jabatan;
-    if (divisi_id) updateData.divisi_id = parseInt(divisi_id.toString());
-    if (role) updateData.role = role;
-
-    // Hash password if provided
+    const dataToUpdate: any = {};
+    if (nama) dataToUpdate.nama = nama;
+    if (email) dataToUpdate.email = email;
+    if (jabatan) dataToUpdate.jabatan = jabatan;
+    if (divisi_id) dataToUpdate.divisi_id = parseInt(divisi_id);
     if (password) {
-      updateData.password = await bcrypt.hash(password, 12);
+      dataToUpdate.password = await bcrypt.hash(password, 12);
     }
 
-    const updatedUser = await prisma.users.update({
-      where: { id_user: userId },
-      data: updateData,
-      include: {
-        divisi: true,
-      },
+    const updated = await prisma.users.update({
+      where: { id_user: Number(params.id) },
+      data: dataToUpdate,
     });
 
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = updatedUser;
-
-    return NextResponse.json({
-      success: true,
-      data: userWithoutPassword,
-      message: "User updated successfully",
-    });
+    return NextResponse.json({ success: true, user: updated });
   } catch (error) {
-    console.error("Error updating user:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to update user",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Gagal update user" }, { status: 500 });
   }
 }
 
-// DELETE /api/users/[id] - Delete specific user
+// DELETE user
 export async function DELETE(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const userId = parseInt(params.id);
-
-    if (!userId || isNaN(userId)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid user ID",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if user exists
-    const existingUser = await prisma.users.findUnique({
-      where: { id_user: userId },
-    });
-
-    if (!existingUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "User not found",
-        },
-        { status: 404 }
-      );
-    }
-
-    // Delete user (cascade will handle related records)
     await prisma.users.delete({
-      where: { id_user: userId },
+      where: { id_user: Number(params.id) },
     });
-
-    return NextResponse.json({
-      success: true,
-      message: "User deleted successfully",
-    });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting user:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to delete user",
-      },
+      { error: "Gagal menghapus user" },
       { status: 500 }
     );
   }
