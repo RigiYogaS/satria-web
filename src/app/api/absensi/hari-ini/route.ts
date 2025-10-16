@@ -11,18 +11,20 @@ export async function GET(req: Request) {
   const userId = parseInt(session.user.id);
 
   // Ambil absensi hari ini (reset otomatis setiap hari)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const startOfDay = new Date(today);
-  const endOfDay = new Date(today);
-  endOfDay.setHours(23, 59, 59, 999);
+  const now = new Date();
+  const todayUTC = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  const endOfDayUTC = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)
+  );
 
   const absensi = await prisma.absensi.findFirst({
     where: {
       user_id: userId,
       tanggal: {
-        gte: startOfDay,
-        lte: endOfDay,
+        gte: todayUTC,
+        lt: endOfDayUTC,
       },
     },
   });
@@ -61,7 +63,9 @@ export async function POST(req: Request) {
   const { latitude, longitude, accuracy, ipAddress } = body;
 
   const now = new Date();
-  const tanggal = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayUTC = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
 
   // Tentukan status check-in
   const jam = now.getHours();
@@ -74,16 +78,8 @@ export async function POST(req: Request) {
     where: {
       user_id: userId,
       tanggal: {
-        gte: tanggal,
-        lte: new Date(
-          tanggal.getFullYear(),
-          tanggal.getMonth(),
-          tanggal.getDate(),
-          23,
-          59,
-          59,
-          999
-        ),
+        gte: todayUTC,
+        lt: new Date(todayUTC.getTime() + 24 * 60 * 60 * 1000),
       },
     },
   });
@@ -99,7 +95,7 @@ export async function POST(req: Request) {
     data: {
       user_id: userId,
       waktu: now,
-      tanggal,
+      tanggal: todayUTC, 
       status: "Hadir",
       latitude,
       longitude,

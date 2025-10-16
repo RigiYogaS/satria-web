@@ -224,7 +224,7 @@ const DaftarAnggota = () => {
           <SidebarTrigger />
           <AppBreadcrumb />
         </div>
-        <h1 className="text-2xl font-bold text-navy-600 mb-4">
+        <h1 className="md:text-3xl text-2xl font-bold text-neutral-800 mb-4">
           Daftar Anggota
         </h1>
         <p className="text-sm mb-2">

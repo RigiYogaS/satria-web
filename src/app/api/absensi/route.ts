@@ -65,11 +65,16 @@ export async function POST(request: NextRequest) {
       let checkin_status: "tepat_waktu" | "telat" = "telat";
       if (jam < 8 || (jam === 8 && menit === 0)) checkin_status = "tepat_waktu";
 
+      // Ganti cara membuat tanggal:
+      const tanggalUTC = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+      );
+
       // Simpan absensi baru
       await prisma.absensi.create({
         data: {
           user_id: userId,
-          tanggal: startOfDay,
+          tanggal: tanggalUTC, 
           waktu: now,
           lokasi: data.lokasi,
           latitude: data.latitude,
