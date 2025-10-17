@@ -60,7 +60,6 @@ const DaftarAnggota = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showKonfirmasi, setShowKonfirmasi] = useState(false);
 
-  const [editUserId, setEditUserId] = useState<Anggota | null>(null);
   const [openEdit, setOpenEdit] = useState(false);
   const [editUser, setEditUser] = useState<Anggota | null>(null);
 

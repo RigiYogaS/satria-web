@@ -9,13 +9,41 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
-    const user_id = searchParams.get("user_id");
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
+
+    const user_id = searchParams.get("user_id");
+    const search = searchParams.get("search")?.trim();
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
 
     const whereClause: any = {};
 
     if (user_id) whereClause.user_id = parseInt(user_id);
+
+    if (search) {
+      whereClause.OR = [
+        { judul: { contains: search, mode: "insensitive" } },
+        { user: { nama: { contains: search, mode: "insensitive" } } },
+        {
+          user: {
+            divisi: { nama_divisi: { contains: search, mode: "insensitive" } },
+          },
+        },
+      ];
+    }
+
+    if (startDate && endDate) {
+      const [sy, sm, sd] = startDate.split("-").map(Number);
+      const [ey, em, ed] = endDate.split("-").map(Number);
+
+      const start = new Date(Date.UTC(sy, sm - 1, sd, 0, 0, 0));
+      const end = new Date(Date.UTC(ey, em - 1, ed + 1, 0, 0, 0)); 
+
+      console.log("filter UTC range:", start.toISOString(), end.toISOString());
+
+      whereClause.tanggal_upload = { gte: start, lt: end };
+    }
 
     const laporan = await prisma.laporan.findMany({
       where: whereClause,
@@ -70,7 +98,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Simpan file ke uploads/laporanMingguan dengan nama unik
+    // saat POST
+    const tanggalStr = formData.get("tanggal_upload")?.toString();
+    const tanggal_upload = tanggalStr
+      ? new Date(tanggalStr + "T00:00:00")
+      : new Date();
+
     const ext = path.extname(file.name);
     const base = path.basename(file.name, ext);
     const uniqueName = `${base}_${Date.now()}_${uuidv4()}${ext}`;
@@ -94,9 +127,14 @@ export async function POST(request: NextRequest) {
         user_id: Number(user_id),
         judul: judul.toString(),
         file_path: filePath,
-        tanggal_upload: new Date(),
+        tanggal_upload: tanggal_upload,
       },
     });
+
+    console.log(
+      "POST tanggal_upload saved:",
+      laporan.tanggal_upload.toISOString()
+    );
 
     return NextResponse.json(
       { success: true, message: "Report created successfully" },
@@ -115,42 +153,50 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, judul, file_path, nilai_admin } = body;
+    const rawId = body.id ?? body.id_laporan ?? body.idLaporan;
+    const { judul, file_path } = body;
+    let { nilai_admin } = body;
 
-    if (!id) {
+    if (!rawId) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Report ID is required",
-        },
+        { success: false, error: "Report ID is required" },
         { status: 400 }
       );
     }
 
-    // Check if report exists
+    const id = parseInt(rawId);
+    if (Number.isNaN(id)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid report ID" },
+        { status: 400 }
+      );
+    }
+
     const existingLaporan = await prisma.laporan.findUnique({
-      where: { id_laporan: parseInt(id) },
+      where: { id_laporan: id },
     });
 
     if (!existingLaporan) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Report not found",
-        },
+        { success: false, error: "Report not found" },
         { status: 404 }
       );
     }
 
-    // Prepare update data
     const updateData: any = {};
+    if (judul !== undefined) updateData.judul = judul;
+    if (file_path !== undefined) updateData.file_path = file_path;
 
-    if (judul) updateData.judul = judul;
-    if (file_path) updateData.file_path = file_path;
-    if (nilai_admin !== undefined) updateData.nilai_admin = nilai_admin;
+    if (nilai_admin !== undefined) {
+      if (nilai_admin === null) {
+        updateData.nilai_admin = null;
+      } else {
+        updateData.nilai_admin = String(nilai_admin);
+      }
+    }
 
     const updatedLaporan = await prisma.laporan.update({
-      where: { id_laporan: parseInt(id) },
+      where: { id_laporan: id },
       data: updateData,
       include: {
         user: {
@@ -173,10 +219,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error("Error updating laporan:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to update report",
-      },
+      { success: false, error: "Failed to update report" },
       { status: 500 }
     );
   }

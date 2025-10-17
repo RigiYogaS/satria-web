@@ -3,7 +3,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { Pen, Trash } from "lucide-react";
+import { Pen, Trash, Download, Pencil } from "lucide-react";
 
 export const columnsCuti: ColumnDef<any, any>[] = [
   {
@@ -408,5 +408,95 @@ export const columnsAbsensiAdmin: ColumnDef<AbsensiAdminData>[] = [
         </Badge>
       );
     },
+  },
+];
+
+// Struktur data laporan admin
+export type LaporanAdminData = {
+  id_laporan: number;
+  nama: string;
+  bagian: string;
+  judul: string;
+  tanggal_upload: string;
+  // bisa datang sebagai string dari DB atau number dari frontend
+  nilai_admin: number | string | null;
+  file_path: string;
+  status: "dinilai" | "belum" | "ditolak";
+};
+
+// export fungsi untuk menerima callback edit
+export const getColumnsLaporanAdmin = (
+  onEdit: (row: LaporanAdminData) => void
+): ColumnDef<LaporanAdminData>[] => [
+  {
+    accessorKey: "nama",
+    header: "Nama Pengupload",
+    cell: ({ row }) => row.original.nama,
+  },
+  {
+    accessorKey: "bagian",
+    header: "Bagian",
+    cell: ({ row }) => row.original.bagian || "-",
+  },
+  {
+    accessorKey: "judul",
+    header: "Judul",
+    cell: ({ row }) => row.original.judul,
+  },
+  {
+    accessorKey: "tanggal_upload",
+    header: "Tanggal Upload",
+    cell: ({ row }) => {
+      const date = new Date(row.original.tanggal_upload);
+      return date.toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+    },
+  },
+  {
+    accessorKey: "nilai_admin",
+    header: "Nilai",
+    cell: ({ row }) => {
+      const raw = row.original.nilai_admin;
+      const nilai = raw === null ? null : Number(raw);
+      let color = "bg-yellow-100 text-yellow-700";
+      let label = "Belum Dinilai";
+      if (nilai !== null && !Number.isNaN(nilai) && nilai >= 1 && nilai <= 10) {
+        color = "bg-green-100 text-green-700";
+        label = String(nilai);
+      }
+      
+      if (raw === "0" || raw === 0 || nilai === 0) {
+        color = "bg-red-100 text-red-700";
+        label = "Ditolak";
+      }
+      return <Badge className={color}>{label}</Badge>;
+    },
+  },
+  {
+    id: "actions",
+    header: "Action",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2 justify-center">
+        <a
+          href={row.original.file_path}
+          download
+          className="text-blue-500 hover:text-blue-700"
+          title="Download"
+        >
+          <Download size={18} />
+        </a>
+        <button
+          className="text-green-500 hover:text-green-700"
+          title="Nilai"
+          onClick={() => onEdit(row.original)}
+        >
+          <Pencil size={18} />
+        </button>
+      </div>
+    ),
+    enableSorting: false,
   },
 ];
