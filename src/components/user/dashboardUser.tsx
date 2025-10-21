@@ -4,7 +4,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import AppSidebarUser from "./app-sidebarUser";
-import AppBreadcrumb from "../AppBreadcrumb";
+import AppBreadcrumb from "../ui/AppBreadcrumb";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";

@@ -58,29 +58,39 @@ export function DataTableDaftarAnggota<TData, TValue>({
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="w-1/3 truncate text-center"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const headerWidth = (header.column.columnDef.meta as any)
+                    ?.width as string | undefined;
+                  return (
+                    <TableHead
+                      key={header.id}
+                      className="truncate text-center"
+                      style={headerWidth ? { width: headerWidth } : undefined}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
             {[...Array(5)].map((_, index) => (
               <TableRow key={index}>
-                {columns.map((_, cellIndex) => (
+                {columns.map((col, cellIndex) => (
                   <TableCell
                     key={cellIndex}
                     className="h-16 text-xs md:text-sm text-center"
+                    style={
+                      (col.meta as any)?.width
+                        ? { width: (col.meta as any).width }
+                        : undefined
+                    }
                   >
                     <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
                   </TableCell>
@@ -100,19 +110,24 @@ export function DataTableDaftarAnggota<TData, TValue>({
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="w-1/3 truncate text-center"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const headerWidth = (header.column.columnDef.meta as any)
+                    ?.width as string | undefined;
+                  return (
+                    <TableHead
+                      key={header.id}
+                      className="truncate text-center"
+                      style={headerWidth ? { width: headerWidth } : undefined}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             ))}
           </TableHeader>
@@ -120,17 +135,22 @@ export function DataTableDaftarAnggota<TData, TValue>({
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className="h-16 text-xs md:text-sm text-center"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    const cellWidth = (cell.column.columnDef.meta as any)
+                      ?.width as string | undefined;
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        className="h-16 text-xs md:text-sm text-center"
+                        style={cellWidth ? { width: cellWidth } : undefined}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (

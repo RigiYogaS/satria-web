@@ -39,6 +39,7 @@ export async function GET(request: Request) {
       id_user: true,
       nama: true,
       jabatan: true,
+      pangkat: true, // <-- include pangkat
       divisi: {
         select: {
           nama_divisi: true,
@@ -48,11 +49,11 @@ export async function GET(request: Request) {
     orderBy: { nama: "asc" },
   });
 
-  // Mapping agar bagian = divisi.nama
   const result = users.map((user) => ({
     id_user: user.id_user,
     nama: user.nama,
     jabatan: user.jabatan,
+    pangkat: user.pangkat ?? null,
     bagian: user.divisi?.nama_divisi || "-",
   }));
 
@@ -65,7 +66,16 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { email, nama, jabatan, divisi_id, password, role, fromAdmin } = body;
+    const {
+      email,
+      nama,
+      jabatan,
+      divisi_id,
+      password,
+      role,
+      fromAdmin,
+      pangkat,
+    } = body; // <-- tambahkan pangkat
     divisi_id_submitted = divisi_id;
 
     if (!email || !nama || !jabatan || !divisi_id || !password) {
@@ -119,6 +129,7 @@ export async function POST(request: Request) {
           email: email.toLowerCase().trim(),
           nama: nama.trim(),
           jabatan: jabatan.trim(),
+          pangkat: pangkat ? pangkat.trim() : null,
           divisi_id: parseInt(divisi_id),
           password: hashedPassword,
           role: role || "pegawai",
@@ -151,6 +162,7 @@ export async function POST(request: Request) {
         email: email.toLowerCase().trim(),
         nama: nama.trim(),
         jabatan: jabatan.trim(),
+        pangkat: pangkat ? pangkat.trim() : null,
         divisi_id: parseInt(divisi_id),
         password: hashedPassword,
         role: role || "pegawai",
@@ -213,7 +225,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const { nama, email, password, jabatan, divisi_id } = body;
+    const { nama, email, password, jabatan, divisi_id, pangkat } = body; // <-- tambahkan pangkat
 
     // Siapkan objek data update
     const dataToUpdate: any = {};
@@ -221,6 +233,7 @@ export async function PUT(
     if (email) dataToUpdate.email = email;
     if (jabatan) dataToUpdate.jabatan = jabatan;
     if (divisi_id) dataToUpdate.divisi_id = parseInt(divisi_id);
+    if (pangkat !== undefined) dataToUpdate.pangkat = pangkat; // <-- tambahkan pangkat
 
     if (password) {
       dataToUpdate.password = await bcrypt.hash(password, 12);

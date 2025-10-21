@@ -20,7 +20,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {AbsensiAdminData} from "@/components/ui/columsTable";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -28,7 +27,7 @@ interface DataTableProps<TData, TValue> {
   loading?: boolean;
 }
 
-export function DataTableAbsensiAdmin<TData extends AbsensiAdminData, TValue>({
+export function DataTableCutiAnggota<TData, TValue>({
   columns,
   data,
   loading = false,
@@ -46,9 +45,7 @@ export function DataTableAbsensiAdmin<TData extends AbsensiAdminData, TValue>({
       sorting,
     },
     initialState: {
-      pagination: {
-        pageSize: 5,
-      },
+      pagination: { pageSize: 5 },
     },
   });
 
@@ -62,17 +59,52 @@ export function DataTableAbsensiAdmin<TData extends AbsensiAdminData, TValue>({
     return (
       <div className="w-full rounded-md border">
         <div className="w-full overflow-x-auto">
-          <Table
-            className="w-full min-w-max text-xs md:text-sm bg-white"
-            style={{ minWidth: "400px" }}
-          >
+          <Table className="w-full min-w-max text-xs md:text-sm bg-white">
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="px-4 py-2 text-left">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </tr>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {[...Array(5)].map((_, idx) => (
+                <TableRow key={idx}>
+                  {columns.map((_, cellIdx) => (
+                    <TableCell key={cellIdx} className="h-12">
+                      <div className="animate-pulse bg-gray-200 h-4 rounded" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 w-full">
+      <div className="w-full rounded-md border bg-white">
+        <div className="w-full overflow-x-auto">
+          <Table className="w-full min-w-max text-xs md:text-sm bg-white">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <TableHead
                       key={header.id}
-                      className="whitespace-nowrap text-xs md:text-sm text-center px-4"
+                      className="whitespace-nowrap text-center px-2 md:px-4"
                     >
                       {header.isPlaceholder
                         ? null
@@ -86,65 +118,13 @@ export function DataTableAbsensiAdmin<TData extends AbsensiAdminData, TValue>({
               ))}
             </TableHeader>
             <TableBody>
-              {[...Array(5)].map((_, index) => (
-                <TableRow key={index}>
-                  {columns.map((_, cellIndex) => (
-                    <TableCell
-                      key={cellIndex}
-                      className="whitespace-nowrap h-16 text-xs md:text-sm text-center px-4"
-                    >
-                      <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4  w-full">
-      <div className="w-full rounded-md border bg-white">
-        <div className="w-full overflow-x-auto">
-          <Table
-            className="w-full min-w-max text-xs md:text-sm bg-white"
-            style={{ minWidth: "400px" }}
-          >
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead
-                        key={header.id}
-                        className="whitespace-nowrap text-center text-xs md:text-sm px-2 md:px-4"
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
+                  <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className="whitespace-nowrap text-center text-xs md:text-sm px-2 md:px-4"
+                        className="whitespace-nowrap text-center px-2 md:px-4"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -158,9 +138,9 @@ export function DataTableAbsensiAdmin<TData extends AbsensiAdminData, TValue>({
                 <TableRow>
                   <TableCell
                     colSpan={columns.length}
-                    className="h-16 text-center text-xs md:text-sm"
+                    className="h-16 text-center"
                   >
-                    Tidak ada data absensi.
+                    Tidak ada data cuti.
                   </TableCell>
                 </TableRow>
               )}
@@ -169,36 +149,21 @@ export function DataTableAbsensiAdmin<TData extends AbsensiAdminData, TValue>({
         </div>
       </div>
 
-      {/* Pagination */}
-      <div className="flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
-        <div className="text-xs md:text-sm text-muted-foreground">
-          {`Showing ${from} to ${to} of ${totalRows} entries`}
-        </div>
+      <div className="flex flex-col md:flex-row items-center justify-between">
+        <div className="text-xs md:text-sm text-muted-foreground">{`Showing ${from} to ${to} of ${totalRows} entries`}</div>
         <div className="flex items-center space-x-2">
           <Button
-            variant="default"
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className={`text-xs md:text-sm ${
-              table.getCanPreviousPage()
-                ? "bg-navy-100 hover:bg-navy-400 text-white"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
           >
             Previous
           </Button>
           <span className="text-xs md:text-sm">{pageIndex + 1}</span>
           <Button
-            variant="default"
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className={`text-xs md:text-sm ${
-              table.getCanNextPage()
-                ? "bg-navy-100 hover:bg-navy-400 text-white"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
           >
             Next
           </Button>

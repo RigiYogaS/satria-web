@@ -24,6 +24,7 @@ const RegisterForm = () => {
     jabatan: "",
     bagian: "",
     password: "",
+    pangkat: "",
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -125,6 +126,7 @@ const RegisterForm = () => {
         jabatan: formData.jabatan,
         divisi_id: selectedDivisi.id_divisi,
         password: formData.password,
+        pangkat: formData.pangkat,
       };
       const response = await fetch("/api/users", {
         method: "POST",
@@ -140,11 +142,14 @@ const RegisterForm = () => {
           jabatan: "",
           bagian: "",
           password: "",
+          pangkat: "",
         });
         setPasswordErrors([]);
         setTimeout(() => {
           router.push(
-            `/auth-routing/verify-otp?email=${encodeURIComponent(formData.email)}`
+            `/auth-routing/verify-otp?email=${encodeURIComponent(
+              formData.email
+            )}`
           );
         }, 2000);
       } else {
@@ -159,9 +164,7 @@ const RegisterForm = () => {
 
   return (
     <section className="w-full min-h-screen flex flex-col md:flex-row bg-neutral-100 md:bg-white font-montserrat">
-      {/* KIRI: FORM REGISTER */}
       <div className="w-full md:w-1/2 min-h-screen md:h-screen bg-neutral-100 md:bg-white grid grid-rows-[auto_1fr]">
-        {/* ROW 1: LOGO MOBILE */}
         <div className="md:hidden flex flex-col items-center mt-8 mb-2 bg-neutral-100">
           <Image
             src="/logo/divhub.png"
@@ -175,7 +178,7 @@ const RegisterForm = () => {
           </h1>
         </div>
         {/* ROW 2: CARD FORM */}
-        <div className="flex justify-center items-start md:items-center py-6 w-full h-auto md:h-screen  bg-white rounded-t-3xl shadow-lg">
+        <div className="flex justify-center items-start md:items-center py-6 w-full h-auto md:h-screen bg-white rounded-t-3xl shadow-lg">
           <div className="w-full max-w-md px-6 flex flex-col items-center justify-center">
             <div className="flex flex-col text-center gap-1 w-full mb-6">
               <h1 className="text-2xl font-bold mb-1 md:text-3xl">Daftar</h1>
@@ -244,6 +247,21 @@ const RegisterForm = () => {
                   className="text-sm"
                 />
               </div>
+              {/* PANGKAT */}
+              <div className="grid w-full items-center gap-1">
+                <Label htmlFor="pangkat" className="text-sm">
+                  Pangkat
+                </Label>
+                <Input
+                  type="text"
+                  id="pangkat"
+                  placeholder="Masukkan Pangkat"
+                  value={formData.pangkat}
+                  onChange={handleChange}
+                  required
+                  className="text-sm"
+                />
+              </div>
               {/* BAGIAN */}
               <div className="relative flex flex-col w-full gap-1">
                 <Label htmlFor="bagian" className="text-sm">
@@ -304,71 +322,61 @@ const RegisterForm = () => {
                 </div>
                 {/* Password Requirements */}
                 {formData.password && (
-                  <div className="text-xs space-y-1 mt-2">
-                    <p className="font-medium text-gray-700">
-                      Kriteria Password:
-                    </p>
-                    <div className="space-y-1">
-                      <div
-                        className={`flex items-center gap-2 ${
+                  <div className="mt-2">
+                    <div className="text-xs font-medium text-gray-700 mb-1">
+                      Kriteria Password
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span
+                        title="Minimal 8 karakter"
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
                           formData.password.length >= 8
-                            ? "text-green-600"
-                            : "text-red-500"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-700"
                         }`}
                       >
-                        <span>{formData.password.length >= 8 ? "✓" : "✗"}</span>
-                        <span>Minimal 8 karakter</span>
-                      </div>
-                      <div
-                        className={`flex items-center gap-2 ${
+                        Min 8
+                      </span>
+                      <span
+                        title="Minimal 1 huruf besar"
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
                           /[A-Z]/.test(formData.password)
-                            ? "text-green-600"
-                            : "text-red-500"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-700"
                         }`}
                       >
-                        <span>
-                          {/[A-Z]/.test(formData.password) ? "✓" : "✗"}
-                        </span>
-                        <span>Minimal 1 huruf besar</span>
-                      </div>
-                      <div
-                        className={`flex items-center gap-2 ${
+                        Upper
+                      </span>
+                      <span
+                        title="Minimal 1 huruf kecil"
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
                           /[a-z]/.test(formData.password)
-                            ? "text-green-600"
-                            : "text-red-500"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-700"
                         }`}
                       >
-                        <span>
-                          {/[a-z]/.test(formData.password) ? "✓" : "✗"}
-                        </span>
-                        <span>Minimal 1 huruf kecil</span>
-                      </div>
-                      <div
-                        className={`flex items-center gap-2 ${
+                        Lower
+                      </span>
+                      <span
+                        title="Minimal 1 angka"
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
                           /[0-9]/.test(formData.password)
-                            ? "text-green-600"
-                            : "text-red-500"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-700"
                         }`}
                       >
-                        <span>
-                          {/[0-9]/.test(formData.password) ? "✓" : "✗"}
-                        </span>
-                        <span>Minimal 1 angka</span>
-                      </div>
-                      <div
-                        className={`flex items-center gap-2 ${
-                          /[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
-                            ? "text-green-600"
-                            : "text-red-500"
+                        Number
+                      </span>
+                      <span
+                        title="Minimal 1 karakter khusus"
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          /[!@#$%^&*(),.?\":{}|<>]/.test(formData.password)
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-700"
                         }`}
                       >
-                        <span>
-                          {/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
-                            ? "✓"
-                            : "✗"}
-                        </span>
-                        <span>Minimal 1 karakter khusus (!@#$%^&*)</span>
-                      </div>
+                        Special
+                      </span>
                     </div>
                   </div>
                 )}

@@ -73,7 +73,6 @@ export async function POST(req: Request) {
   let checkin_status: "tepat_waktu" | "telat" = "telat";
   if (jam < 8 || (jam === 8 && menit === 0)) checkin_status = "tepat_waktu";
 
-  // Cegah check-in dobel di hari yang sama
   const existing = await prisma.absensi.findFirst({
     where: {
       user_id: userId,
@@ -90,7 +89,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // Simpan ke database
   await prisma.absensi.create({
     data: {
       user_id: userId,

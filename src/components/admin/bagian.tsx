@@ -2,7 +2,7 @@
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebarAdmin from "./app-sidebarAdmin";
-import AppBreadcrumb from "../AppBreadcrumb";
+import AppBreadcrumb from "../ui/AppBreadcrumb";
 
 const Bagian = () => {
   return (

@@ -4,7 +4,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import AppSidebarAdmin from "./app-sidebarAdmin";
-import AppBreadcrumb from "../AppBreadcrumb";
+import AppBreadcrumb from "../ui/AppBreadcrumb";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -57,7 +57,8 @@ const DashboardAdmin = () => {
               Selamat datang Admin {session.user.name}!
             </h1>
             <p className="my-3 md:text-base text-sm mb-6 text-shadow-md">
-              Anda sebagai admin dapat mengelola data user, absensi, cuti, dan laporan, hingga IP Address Untuk Absensi di sini.
+              Anda sebagai admin dapat mengelola data user, absensi, cuti, dan
+              laporan, hingga IP Address Untuk Absensi di sini.
             </p>
             <Button asChild className="bg-navy-200 hover:bg-navy-400 shadow-md">
               <Link href={"/admin/absensi"}>Kelola Absensi</Link>

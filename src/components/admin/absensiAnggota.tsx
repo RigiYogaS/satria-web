@@ -2,7 +2,7 @@
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebarAdmin from "./app-sidebarAdmin";
-import AppBreadcrumb from "../AppBreadcrumb";
+import AppBreadcrumb from "../ui/AppBreadcrumb";
 import { RangeDatePicker } from "@/components/ui/rangeDatePicker";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,16 @@ import { DateRange } from "react-day-picker";
 import { useState, useEffect } from "react";
 import { subDays } from "date-fns";
 import { DataTableAbsensiAdmin } from "../ui/dataTableAbsensiAdmin";
-import { columnsAbsensiAdmin, AbsensiAdminData } from "../ui/columsTable";
+import { getColumnsAbsensiAdmin } from "@/components/ui/columsTable";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { AbsensiAdminData } from "@/components/ui/columsTable";
 
 const DEFAULT_RANGE = {
   from: subDays(new Date(), 6),
@@ -23,6 +32,8 @@ const AbsensiAnggota = () => {
   );
   const [data, setData] = useState<AbsensiAdminData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [laporanOpen, setLaporanOpen] = useState(false);
+  const [selectedLaporan, setSelectedLaporan] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAbsensiData(dateRange?.from, dateRange?.to);
@@ -33,7 +44,9 @@ const AbsensiAnggota = () => {
     try {
       let url = `/api/absensi/riwayat-admin`;
       if (startDate && endDate) {
-        url += `?startDate=${startDate.toISOString().slice(0, 10)}&endDate=${endDate.toISOString().slice(0, 10)}`;
+        url += `?startDate=${startDate
+          .toISOString()
+          .slice(0, 10)}&endDate=${endDate.toISOString().slice(0, 10)}`;
       }
       const response = await fetch(url);
       const result = await response.json();
@@ -58,6 +71,11 @@ const AbsensiAnggota = () => {
 
   const handleResetFilter = () => {
     setDateRange(DEFAULT_RANGE);
+  };
+
+  const handleOpenLaporan = (laporan: string | null) => {
+    setSelectedLaporan(laporan);
+    setLaporanOpen(true);
   };
 
   return (
@@ -100,12 +118,38 @@ const AbsensiAnggota = () => {
         </div>
         <div className="mt-6 w-full">
           <DataTableAbsensiAdmin
-            columns={columnsAbsensiAdmin}
+            columns={getColumnsAbsensiAdmin(handleOpenLaporan)}
             data={data}
             loading={loading}
           />
         </div>
       </main>
+
+      {/* Dialog laporan harian */}
+      <Dialog open={laporanOpen} onOpenChange={setLaporanOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Laporan Harian</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            {selectedLaporan ? (
+              <div className="whitespace-pre-wrap text-sm text-gray-800">
+                {selectedLaporan}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">Tidak ada laporan.</div>
+            )}
+          </DialogDescription>
+          <DialogFooter>
+            <button
+              onClick={() => setLaporanOpen(false)}
+              className="px-3 py-1 rounded bg-navy-600 text-white"
+            >
+              Tutup
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 };

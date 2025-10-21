@@ -13,11 +13,19 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
+    const search = searchParams.get("search")?.trim();
 
     const whereClause: any = {};
 
     if (user_id) whereClause.user_id = parseInt(user_id);
     if (status) whereClause.status = status;
+
+    if (search) {
+      whereClause.OR = [
+        { alasan: { contains: search, mode: "insensitive" } },
+        { user: { nama: { contains: search, mode: "insensitive" } } },
+      ];
+    }
 
     const cuti = await prisma.cuti.findMany({
       where: whereClause,
@@ -130,64 +138,47 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const {
       id,
+      status,
       alasan,
-      bukti_file,
       keterangan,
-      lebih_dari_sehari,
       tgl_mulai,
       tgl_selesai,
-      status,
+      lebih_dari_sehari,
     } = body;
 
     if (!id) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Leave request ID is required",
-        },
+        { success: false, error: "Leave request ID is required" },
         { status: 400 }
       );
     }
 
-    // Check if leave request exists
     const existingCuti = await prisma.cuti.findUnique({
       where: { id_cuti: parseInt(id) },
     });
-
     if (!existingCuti) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Leave request not found",
-        },
+        { success: false, error: "Leave request not found" },
         { status: 404 }
       );
     }
 
-    // Prepare update data
     const updateData: any = {};
-
-    if (alasan) updateData.alasan = alasan;
-    if (bukti_file !== undefined) updateData.bukti_file = bukti_file;
+    if (alasan !== undefined) updateData.alasan = alasan;
     if (keterangan !== undefined) updateData.keterangan = keterangan;
     if (lebih_dari_sehari !== undefined)
       updateData.lebih_dari_sehari = Boolean(lebih_dari_sehari);
-    if (tgl_mulai) updateData.tgl_mulai = new Date(tgl_mulai);
-    if (tgl_selesai) updateData.tgl_selesai = new Date(tgl_selesai);
-    if (status) updateData.status = status;
+    if (tgl_mulai !== undefined) updateData.tgl_mulai = new Date(tgl_mulai);
+    if (tgl_selesai !== undefined)
+      updateData.tgl_selesai = new Date(tgl_selesai);
+    if (status !== undefined) updateData.status = status;
 
     const updatedCuti = await prisma.cuti.update({
       where: { id_cuti: parseInt(id) },
       data: updateData,
       include: {
         user: {
-          select: {
-            id_user: true,
-            nama: true,
-            email: true,
-            jabatan: true,
-            divisi: true,
-          },
+          select: { id_user: true, nama: true, divisi: true },
         },
       },
     });
@@ -200,10 +191,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error("Error updating cuti:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to update leave request",
-      },
+      { success: false, error: "Failed to update leave request" },
       { status: 500 }
     );
   }
@@ -225,7 +213,6 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Check if leave request exists
     const existingCuti = await prisma.cuti.findUnique({
       where: { id_cuti: parseInt(id) },
     });
@@ -238,6 +225,29 @@ export async function DELETE(request: NextRequest) {
         },
         { status: 404 }
       );
+    }
+
+    if (
+      existingCuti.bukti_file &&
+      typeof existingCuti.bukti_file === "string"
+    ) {
+      const buktiPath = existingCuti.bukti_file;
+      if (buktiPath.startsWith("/uploads/cuti/")) {
+        const fullPath = path.join(
+          process.cwd(),
+          "public",
+          buktiPath.replace(/^\//, "")
+        );
+        try {
+          if (fs.existsSync(fullPath)) {
+            fs.unlinkSync(fullPath);
+          }
+        } catch (fsErr) {
+          console.error("Failed to delete bukti file:", fsErr);
+        }
+      } else {
+        console.warn("Ignored unsafe bukti_file path:", buktiPath);
+      }
     }
 
     await prisma.cuti.delete({

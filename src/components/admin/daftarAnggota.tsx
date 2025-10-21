@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { SearchIcon, Eye, EyeOff, X } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebarAdmin from "./app-sidebarAdmin";
-import AppBreadcrumb from "../AppBreadcrumb";
+import AppBreadcrumb from "../ui/AppBreadcrumb";
 import { DataTableDaftarAnggota } from "@/components/ui/dataTableDaftarAnggota";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ interface Anggota {
   email: string;
   jabatan: string;
   bagian: string;
+  pangkat?: string;
 }
 
 function validatePassword(password: string): string[] {
@@ -102,7 +103,6 @@ const DaftarAnggota = () => {
     fetchDivisi();
   }, []);
 
-  // Filter hanya berdasarkan nama dan jabatan bukan admin
   const filteredData = data
     .filter((item) => item.jabatan.toLowerCase() !== "admin")
     .filter((item) => item.nama.toLowerCase().includes(search.toLowerCase()));
@@ -183,7 +183,6 @@ const DaftarAnggota = () => {
   };
 
   const handleEdit = (user: Anggota) => {
-    // Cari id_divisi dari nama bagian jika perlu
     const divisi = divisiList.find((d) => d.nama_divisi === user.bagian);
     setEditUser({
       ...user,
@@ -399,6 +398,7 @@ const DaftarAnggota = () => {
                     jabatan: editUser.jabatan,
                     divisi_id: editUser.bagian,
                     email: editUser.email,
+                    pangkat: editUser.pangkat ?? null,
                   };
                   if (editPassword) body.password = editPassword;
 
@@ -455,6 +455,20 @@ const DaftarAnggota = () => {
                     }
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Pangkat
+                  </label>
+                  <Input
+                    placeholder="Masukkan Pangkat"
+                    value={editUser.pangkat ?? ""}
+                    onChange={(e) =>
+                      setEditUser({ ...editUser, pangkat: e.target.value })
+                    }
+                  />
+                </div>
+
                 <div className="relative flex flex-col w-full gap-1">
                   <Label htmlFor="bagian" className="text-sm">
                     Bagian

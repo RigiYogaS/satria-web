@@ -3,7 +3,7 @@
 import { AlertCircle } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebarUser from "@/components/user/app-sidebarUser";
-import AppBreadcrumb from "@/components/AppBreadcrumb";
+import AppBreadcrumb from "@/components/ui/AppBreadcrumb";
 import AbsenCard from "../ui/absenCard";
 import StatusAbsen from "../ui/statusAbsen";
 import LaporanHarian, { LaporanHarianHandle } from "../ui/laporanHarian";
@@ -43,9 +43,8 @@ const AbsenToday = () => {
     triggerCheckOut: (data: AbsenData) => void;
   }>(null);
 
-  const laporanRef = useRef<LaporanHarianHandle>(null);
+  const laporanRef = useRef<LaporanHarianHandle | null>(null);
 
-  // Fetch status absensi hari ini dari API
   const checkTodayAbsensiStatus = async () => {
     setIsLoadingAbsenStatus(true);
     try {
@@ -140,7 +139,6 @@ const AbsenToday = () => {
     }
   };
 
-  // Handler setelah check-out
   const handleCheckOut = async (absenData: AbsenData) => {
     if (!laporanComplete) {
       setShowLaporanAlert(true);
@@ -148,7 +146,6 @@ const AbsenToday = () => {
     }
     setLoading(true);
     try {
-      // Kirim request checkout ke API
       const res = await fetch("/api/absensi", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -166,7 +163,6 @@ const AbsenToday = () => {
         alert(result.error || "Gagal check-out");
         return;
       }
-      // Setelah sukses, refetch status absensi
       await checkTodayAbsensiStatus();
     } finally {
       setLoading(false);

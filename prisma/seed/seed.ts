@@ -32,11 +32,15 @@ async function main() {
   console.log("Selesai seeding divisi:", divisiResult);
 
   console.log("Mulai seeding ip_lokasi...");
-  const ipResult = await prisma.ipLokasi.create({
-    data: {
-      ip: "192.168.200.53",
-      nama_wifi: "DIVHUBINTER POLRI",
-    },
+  const ipLokasiData = [
+    { ip: "192.168.200.53", nama_wifi: "DIVHUBINTER POLRI" },
+    { ip: "10.87.44.126", nama_wifi: "VVIP_OPEN" },
+    { ip: "103.136.57.161", nama_wifi: "Bhaap" },
+  ];
+
+  const ipResult = await prisma.ipLokasi.createMany({
+    data: ipLokasiData,
+    skipDuplicates: true,
   });
   console.log("Selesai seeding ip_lokasi:", ipResult);
 

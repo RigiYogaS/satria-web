@@ -75,13 +75,14 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const { nama, email, password, jabatan, divisi_id } = body;
+    const { nama, email, password, jabatan, divisi_id, pangkat } = body;
 
     const dataToUpdate: any = {};
     if (nama) dataToUpdate.nama = nama;
     if (email) dataToUpdate.email = email;
     if (jabatan) dataToUpdate.jabatan = jabatan;
     if (divisi_id) dataToUpdate.divisi_id = parseInt(divisi_id);
+    if (pangkat !== undefined) dataToUpdate.pangkat = pangkat;
     if (password) {
       dataToUpdate.password = await bcrypt.hash(password, 12);
     }

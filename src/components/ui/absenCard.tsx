@@ -14,9 +14,10 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { useWifiValidation } from "@/hooks/useWifiValidation";
 import { useAbsenLogic } from "@/hooks/useAbsenLogic";
 import AlertUsage from "./alertUsage";
-import { LaporanHarianHandle } from "./laporanHarian";
 import { AbsenData } from "@/types/absen";
+import type { LaporanHarianHandle } from "@/components/ui/laporanHarian";
 import { Skeleton } from "@/components/ui/skeleton";
+import React from "react";
 
 interface AbsenCardProps {
   onCheckIn?: (data: AbsenData) => Promise<void>;
@@ -24,19 +25,20 @@ interface AbsenCardProps {
   isCheckedIn?: boolean;
   isCheckedOut?: boolean;
   checkInTime?: string;
+  checkOutTime?: string;
   laporanRef?: React.RefObject<LaporanHarianHandle | null>;
   laporanComplete?: boolean;
   loading?: boolean;
 }
 
-const AbsenCard: React.FC<AbsenCardProps> = ({
+export default function AbsenCard({
   onCheckIn,
   onCheckOut,
   isCheckedIn = false,
   isCheckedOut = false,
   laporanComplete = false,
   loading = false,
-}) => {
+}: AbsenCardProps) {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [mounted, setMounted] = useState<boolean>(false);
   const [realLocationName, setRealLocationName] = useState<string>(
@@ -44,10 +46,8 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
   );
   const [showLaporanAlert, setShowLaporanAlert] = useState(false);
 
-  // Memoization cache for reverse geocoding
   const locationCache = useRef<Record<string, string>>({});
 
-  // Custom hooks
   const {
     location,
     loading: locationLoading,
@@ -81,7 +81,6 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
     setAlertAccuracy,
   } = useAbsenLogic();
 
-  // Mount and timer effects
   useEffect(() => {
     setMounted(true);
     setCurrentTime(new Date());
@@ -118,8 +117,6 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
     });
   };
 
-  // Validation handlers
-  // Tambahkan fungsi untuk cek status check-in
   const getCheckinStatus = (date: Date): "tepat_waktu" | "telat" => {
     const jam = date.getHours();
     const menit = date.getMinutes();
@@ -161,7 +158,6 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
       return;
     }
 
-    // Cek jarak dari koordinat kantor
     const kantorLat = -6.23892;
     const kantorLng = 106.803395;
     const maxRadius = 100;
@@ -185,7 +181,6 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
 
     const checkinStatus = currentTime ? getCheckinStatus(currentTime) : "telat";
 
-    // Pastikan jamKeluar selalu ada (walau kosong)
     const absenData: AbsenData = {
       jamDatang: currentTime ? currentTime.toISOString() : "",
       jamKeluar: currentTime ? currentTime.toISOString() : "",
@@ -265,7 +260,6 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
     setPendingAction(null);
   };
 
-  // Card state: SELALU berdasarkan prop dari parent
   const getCardState = () => {
     if (isCheckedOut) return "checkedOut";
     if (isCheckedIn) return "checkedIn";
@@ -492,6 +486,23 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
                 <p className="md:text-xs text-xs text-gray-600 mt-1">
                   Lokasi: {getLocationName()}
                 </p>
+                <div>IP yang terdeteksi: {currentIP ?? "-"}</div>
+                {/* DEBUG: tampilkan semua IP yang dideteksi dan allowed */}
+                <div className="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-700">
+                  <div>
+                    <b>DEBUG Detected IPs:</b> {currentIP ?? "-"}
+                  </div>
+                  <div>
+                    <b>DEBUG Allowed IPs:</b>{" "}
+                    {allowedWifiList.map((a) => a.ip).join(", ") || "-"}
+                  </div>
+                  <div>
+                    <b>DEBUG Nama Wi-Fi:</b> {connectedWifiName ?? "-"}
+                  </div>
+                  <div>
+                    <b>DEBUG Valid:</b> {isValidWifi ? "YA" : "TIDAK"}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -629,6 +640,4 @@ const AbsenCard: React.FC<AbsenCardProps> = ({
       />
     </div>
   );
-};
-
-export default AbsenCard;
+}

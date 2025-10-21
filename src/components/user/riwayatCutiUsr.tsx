@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import AppBreadcrumb from "@/components/AppBreadcrumb";
+import AppBreadcrumb from "@/components/ui/AppBreadcrumb";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebarUser from "@/components/user/app-sidebarUser";
 import { RangeDatePicker } from "../ui/rangeDatePicker";

@@ -3,7 +3,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { Pen, Trash, Download, Pencil } from "lucide-react";
+import { Download, Check, X, Pen, Trash, Pencil, FileText } from "lucide-react";
 
 export const columnsCuti: ColumnDef<any, any>[] = [
   {
@@ -90,7 +90,6 @@ export type AbsensiData = {
   checkout_status?: "normal" | "lembur" | "setengah_hari";
 };
 
-// Kolom untuk tabel absensi
 export const columns: ColumnDef<AbsensiData>[] = [
   {
     accessorKey: "tanggal",
@@ -217,12 +216,12 @@ export const columns: ColumnDef<AbsensiData>[] = [
   },
 ];
 
-// Struktur data user/anggota
 export type UserData = {
   id_user: number;
   nama: string;
   email: string;
   jabatan: string;
+  pangkat?: string;
   bagian: string;
 };
 
@@ -234,21 +233,31 @@ export const columnsUser = (
   {
     accessorKey: "nama",
     header: "Nama",
+    meta: { width: "20%" },
     cell: (info) => info.getValue(),
   },
   {
     accessorKey: "jabatan",
     header: "Jabatan",
+    meta: { width: "20%" },
     cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "pangkat",
+    header: "Pangkat",
+    meta: { width: "20%" },
+    cell: (info) => info.getValue() ?? "-",
   },
   {
     accessorKey: "bagian",
     header: "Bagian",
+    meta: { width: "20%" },
     cell: (info) => info.getValue(),
   },
   {
     id: "actions",
     header: "Action",
+    meta: { width: "20%" },
     cell: ({ row }) => (
       <div className="flex items-center justify-center gap-2">
         <button
@@ -276,16 +285,19 @@ export const columnsUser = (
 // Struktur data absensi admin
 export type AbsensiAdminData = {
   id: number;
-  nama: string; // Nama Pegawai
+  nama: string;
   tanggal: string;
   status: string;
   waktu_masuk: string | null;
   waktu_keluar: string | null;
   checkin_status?: "tepat_waktu" | "telat";
   checkout_status?: "normal" | "lembur" | "setengah_hari";
+  laporan?: string | null; 
 };
 
-export const columnsAbsensiAdmin: ColumnDef<AbsensiAdminData>[] = [
+export const getColumnsAbsensiAdmin = (
+  onViewLaporan: (laporan: string | null) => void
+): ColumnDef<AbsensiAdminData>[] => [
   {
     accessorKey: "nama",
     header: "Nama Pegawai",
@@ -335,12 +347,11 @@ export const columnsAbsensiAdmin: ColumnDef<AbsensiAdminData>[] = [
       const waktuMasuk = row.original.waktu_masuk;
       const waktuKeluar = row.original.waktu_keluar;
       if (!waktuMasuk) return <span className="text-gray-400">-</span>;
-      const formatWaktu = (waktu: string) => {
-        return new Date(waktu).toLocaleTimeString("id-ID", {
+      const formatWaktu = (waktu: string) =>
+        new Date(waktu).toLocaleTimeString("id-ID", {
           hour: "2-digit",
           minute: "2-digit",
         });
-      };
       return (
         <div className="flex flex-col items-center justify-center gap-1">
           <div className="flex items-center gap-2">
@@ -409,6 +420,25 @@ export const columnsAbsensiAdmin: ColumnDef<AbsensiAdminData>[] = [
       );
     },
   },
+  {
+    accessorKey: "laporan",
+    header: "Laporan",
+    cell: ({ row }) => {
+      const laporan = row.original.laporan as string | null | undefined;
+      return laporan ? (
+        <button
+          onClick={() => onViewLaporan(laporan ?? null)}
+          className="text-blue-600 hover:text-blue-800"
+          title="Lihat Laporan Harian"
+          type="button"
+        >
+          <FileText size={18} />
+        </button>
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
+    },
+  },
 ];
 
 // Struktur data laporan admin
@@ -418,7 +448,6 @@ export type LaporanAdminData = {
   bagian: string;
   judul: string;
   tanggal_upload: string;
-  // bisa datang sebagai string dari DB atau number dari frontend
   nilai_admin: number | string | null;
   file_path: string;
   status: "dinilai" | "belum" | "ditolak";
@@ -467,7 +496,7 @@ export const getColumnsLaporanAdmin = (
         color = "bg-green-100 text-green-700";
         label = String(nilai);
       }
-      
+
       if (raw === "0" || raw === 0 || nilai === 0) {
         color = "bg-red-100 text-red-700";
         label = "Ditolak";
@@ -494,6 +523,122 @@ export const getColumnsLaporanAdmin = (
           onClick={() => onEdit(row.original)}
         >
           <Pencil size={18} />
+        </button>
+      </div>
+    ),
+    enableSorting: false,
+  },
+];
+
+export const getColumnsCuti = (
+  onEdit: (row: any) => void,
+  onDelete: (row: any) => void
+): ColumnDef<any, any>[] => [
+  {
+    accessorKey: "created_at",
+    header: "Tanggal Pengajuan",
+    cell: ({ getValue }) => (
+      <span>
+        {new Date(getValue() as string).toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "user.nama",
+    header: "Nama",
+    cell: ({ row }) => row.original.user?.nama || "-",
+  },
+  {
+    accessorKey: "user.divisi.nama_divisi",
+    header: "Bagian",
+    cell: ({ row }) => row.original.user?.divisi?.nama_divisi || "-",
+  },
+  {
+    accessorKey: "alasan",
+    header: "Alasan",
+    cell: ({ getValue }) => (
+      <span className="text-sm">{getValue() as string}</span>
+    ),
+  },
+  {
+    accessorKey: "tgl_mulai",
+    header: "Mulai Cuti",
+    cell: ({ getValue }) =>
+      new Date(getValue() as string).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }),
+  },
+  {
+    accessorKey: "tgl_selesai",
+    header: "Akhir Cuti",
+    cell: ({ getValue }) =>
+      new Date(getValue() as string).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }),
+  },
+  {
+    accessorKey: "bukti_file",
+    header: "Bukti",
+    cell: ({ row }) =>
+      row.original.bukti_file ? (
+        <a
+          href={row.original.bukti_file}
+          className="text-blue-600 hover:underline"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <Download size={16} />
+        </a>
+      ) : (
+        <span className="text-gray-400">-</span>
+      ),
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ getValue }) => {
+      const status = getValue() as string;
+      return (
+        <span
+          className={
+            status === "pending"
+              ? "bg-yellow-100 text-yellow-700 px-2 py-1 rounded"
+              : status === "disetujui"
+              ? "bg-green-100 text-green-700 px-2 py-1 rounded"
+              : "bg-red-100 text-red-700 px-2 py-1 rounded"
+          }
+        >
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </span>
+      );
+    },
+  },
+  {
+    id: "actions",
+    header: "Action",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-3 justify-center">
+        <button
+          title="Edit Status"
+          onClick={() => onEdit(row.original)}
+          className="text-green-600 hover:text-green-800"
+        >
+          <Pen size={16} />
+        </button>
+        <button
+          title="Hapus Cuti"
+          onClick={() => onDelete(row.original)}
+          className="text-red-600 hover:text-red-800"
+        >
+          <Trash size={16} />
         </button>
       </div>
     ),

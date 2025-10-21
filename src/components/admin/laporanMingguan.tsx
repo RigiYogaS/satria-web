@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebarAdmin from "./app-sidebarAdmin";
-import AppBreadcrumb from "../AppBreadcrumb";
+import AppBreadcrumb from "../ui/AppBreadcrumb";
 import { RangeDatePicker } from "@/components/ui/rangeDatePicker";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";

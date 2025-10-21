@@ -30,7 +30,6 @@ import { useState } from "react";
 const AppSidebarAdmin = () => {
   const { user, logout } = useAuth();
   const [managementOpen, setManagementOpen] = useState(false);
-  const [laporanOpen, setLaporanOpen] = useState(false);
   const [kelolaOpen, setKelolaOpen] = useState(false);
 
   return (
