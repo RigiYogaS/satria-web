@@ -183,7 +183,7 @@ const AppSidebarAdmin = () => {
                           href="/admin-routing/kelola/ip-lokasi"
                           className="text-navy-600 hover:text-navy-800 text-sm"
                         >
-                          <span>IP dan Lokasi</span>
+                          <span>Jaringan</span>
                         </a>
                       </SidebarMenuButton>
                       <SidebarMenuButton asChild size="sm">

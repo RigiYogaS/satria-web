@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { matchIpPattern, cleanIpString } from "@/lib/ip"; // added
 
 // GET: Mendapatkan semua IP yang diizinkan
 export async function GET(request: NextRequest) {
@@ -9,16 +10,25 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const ip = searchParams.get("ip");
 
-    // Jika ada query ip, cari satu data saja
     if (ip) {
-      const ipData = await prisma.ipLokasi.findUnique({
-        where: { ip },
-        select: { nama_wifi: true },
+      const cleanedIp = cleanIpString(ip) ?? ip;
+
+      const all = await prisma.ipLokasi.findMany({
+        select: { ip: true, nama_wifi: true },
       });
-      return NextResponse.json({ nama_wifi: ipData?.nama_wifi || null });
+
+      for (const entry of all) {
+        try {
+          if (entry.ip && matchIpPattern(entry.ip, String(cleanedIp))) {
+            return NextResponse.json({ nama_wifi: entry.nama_wifi ?? null });
+          }
+        } catch (e) {
+        }
+      }
+
+      return NextResponse.json({ nama_wifi: null });
     }
 
-    // Jika tidak ada query ip, kembalikan list (seperti sebelumnya)
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
@@ -45,7 +55,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: Menambah IP baru (untuk admin)
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);

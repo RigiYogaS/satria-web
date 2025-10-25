@@ -132,13 +132,9 @@ const AbsensiAnggota = () => {
             <DialogTitle>Laporan Harian</DialogTitle>
           </DialogHeader>
           <DialogDescription>
-            {selectedLaporan ? (
-              <div className="whitespace-pre-wrap text-sm text-gray-800">
-                {selectedLaporan}
-              </div>
-            ) : (
-              <div className="text-sm text-gray-500">Tidak ada laporan.</div>
-            )}
+            <p className="whitespace-pre-wrap text-sm text-gray-800">
+              {selectedLaporan ?? "-"}
+            </p>
           </DialogDescription>
           <DialogFooter>
             <button

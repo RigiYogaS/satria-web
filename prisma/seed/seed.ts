@@ -36,6 +36,10 @@ async function main() {
     { ip: "192.168.200.53", nama_wifi: "DIVHUBINTER POLRI" },
     { ip: "10.87.44.126", nama_wifi: "VVIP_OPEN" },
     { ip: "103.136.57.161", nama_wifi: "Bhaap" },
+    // add CIDR / prefix examples for more tolerant matching:
+    { ip: "103.136.57.0/24", nama_wifi: "Kantor Utama (CIDR)" },
+    { ip: "120.29.225.", nama_wifi: "Office Pool (prefix)" },
+    { ip: "114.10.64.0/24", nama_wifi: "Kantor Cabang X (CIDR)" },
   ];
 
   const ipResult = await prisma.ipLokasi.createMany({

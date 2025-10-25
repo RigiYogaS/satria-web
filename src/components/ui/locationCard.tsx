@@ -7,11 +7,23 @@ interface LocationCardProps {
   jamDatang?: string;
   jamKeluar?: string;
   lokasi?: string;
-  currentIP?: string;
+  currentIP?: string | null;
   wifiName?: string;
   isCheckedOut?: boolean;
   checkinStatus?: "tepat_waktu" | "telat";
   checkoutStatus?: "normal" | "lembur" | "setengah_hari";
+}
+
+// normalize IP: strip IPv6 prefix (::ffff:), take first comma part, extract IPv4 if present
+function normalizeIp(raw?: string | null): string | null {
+  if (!raw) return null;
+  let ip = String(raw).split(",")[0].trim();
+  // remove IPv6 ::ffff: prefix
+  ip = ip.replace(/^::ffff:/i, "");
+  // try extract IPv4
+  const m = ip.match(/([0-9]{1,3}(\.[0-9]{1,3}){3})/);
+  if (m) return m[1];
+  return ip || null;
 }
 
 const LocationCard = ({
@@ -24,26 +36,47 @@ const LocationCard = ({
   checkinStatus,
   checkoutStatus,
 }: LocationCardProps) => {
-  const [wifiName, setWifiName] = useState<string>(wifiNameProp);
+  const [wifiName, setWifiName] = useState<string>(wifiNameProp || "");
 
   useEffect(() => {
+    // prioritize explicit prop
     if (wifiNameProp) {
       setWifiName(wifiNameProp);
       return;
     }
-    if (!currentIP) {
+
+    const normalized = normalizeIp(currentIP);
+    if (!normalized) {
       setWifiName("");
       return;
     }
+
     const fetchWifiName = async () => {
       try {
-        const res = await fetch(`/api/ip-lokasi?ip=${currentIP}`);
+        // debug log (remove in production)
+        // console.log("[LocationCard] fetching ip-lokasi for", normalized);
+        const res = await fetch(
+          `/api/ip-lokasi?ip=${encodeURIComponent(normalized)}`,
+          {
+            cache: "no-store",
+          }
+        );
+        if (!res.ok) {
+          // console.warn("[LocationCard] ip-lokasi response not ok", res.status);
+          setWifiName("");
+          return;
+        }
         const data = await res.json();
-        setWifiName(data.nama_wifi || "");
-      } catch {
+        // server might return different shapes; try multiple fields
+        const name =
+          data?.nama_wifi || data?.nama || data?.name || data?.wifiName || "";
+        setWifiName(name || "");
+      } catch (err) {
+        // console.error("[LocationCard] fetch error", err);
         setWifiName("");
       }
     };
+
     fetchWifiName();
   }, [wifiNameProp, currentIP]);
 

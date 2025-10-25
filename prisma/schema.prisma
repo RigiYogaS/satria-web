@@ -89,6 +89,17 @@ model IpLokasi {
   @@map("ip_lokasi")
 }
 
+model DetectedIpLog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int?
+  detected   Json
+  client_ip  String?
+  user_agent String?
+  created_at DateTime @default(now())
+
+  @@map("detected_ip_logs")
+}
+
 model Divisi {
   id_divisi   Int      @id @default(autoincrement())
   nama_divisi String   @unique

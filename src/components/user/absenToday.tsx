@@ -239,6 +239,7 @@ const AbsenToday = () => {
                   visible={!!absenDataFromAPI}
                   checkOutTime={checkOutTime}
                   isCheckedOut={isCheckedOut}
+                  wifiName={wifiName} 
                 />
               </div>
             )}

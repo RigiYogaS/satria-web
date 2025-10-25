@@ -51,22 +51,19 @@ const DaftarAnggota = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-
   const [nama, setNama] = useState("");
   const [jabatan, setJabatan] = useState("");
+  const [pangkat, setPangkat] = useState("");
   const [email, setEmail] = useState("");
   const [bagian, setBagian] = useState("");
   const [password, setPassword] = useState("");
   const [konfirmasiPassword, setKonfirmasiPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showKonfirmasi, setShowKonfirmasi] = useState(false);
-
   const [openEdit, setOpenEdit] = useState(false);
   const [editUser, setEditUser] = useState<Anggota | null>(null);
-
   const [deleteUser, setDeleteUser] = useState<Anggota | null>(null);
   const [openDelete, setOpenDelete] = useState(false);
-
   const [divisiList, setDivisiList] = useState<
     {
       id_divisi: number;
@@ -113,6 +110,7 @@ const DaftarAnggota = () => {
     if (!isOpen) {
       setNama("");
       setJabatan("");
+      setPangkat("");
       setEmail("");
       setBagian("");
       setPassword("");
@@ -137,7 +135,7 @@ const DaftarAnggota = () => {
       return;
     }
 
-    if (!nama || !jabatan || !email || !bagian) {
+    if (!nama || !jabatan || !pangkat || !email || !bagian) {
       setFormError("Semua field harus diisi.");
       return;
     }
@@ -149,6 +147,7 @@ const DaftarAnggota = () => {
         body: JSON.stringify({
           nama,
           jabatan,
+          pangkat,
           email,
           divisi_id: bagian,
           password,
@@ -165,6 +164,7 @@ const DaftarAnggota = () => {
       setOpen(false);
       setNama("");
       setJabatan("");
+      setPangkat("");
       setEmail("");
       setBagian("");
       setPassword("");
@@ -285,6 +285,17 @@ const DaftarAnggota = () => {
                   onChange={(e) => setJabatan(e.target.value)}
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Pangkat
+                </label>
+                <Input
+                  placeholder="Masukkan Pangkat"
+                  value={pangkat}
+                  onChange={(e) => setPangkat(e.target.value)}
+                />
+              </div>
+              
               <div className="relative flex flex-col w-full gap-1">
                 <Label htmlFor="bagian" className="text-sm">
                   Bagian
@@ -378,7 +389,6 @@ const DaftarAnggota = () => {
                   e.preventDefault();
                   setEditFormError(null);
 
-                  // Validasi password jika diisi
                   if (editPassword) {
                     const passwordErrors = validatePassword(editPassword);
                     if (passwordErrors.length > 0) {

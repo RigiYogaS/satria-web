@@ -61,7 +61,7 @@ const DashboardAdmin = () => {
               laporan, hingga IP Address Untuk Absensi di sini.
             </p>
             <Button asChild className="bg-navy-200 hover:bg-navy-400 shadow-md">
-              <Link href={"/admin/absensi"}>Kelola Absensi</Link>
+              <Link href={"/admin-routing/anggota/absensi-anggota"}>Kelola Absensi</Link>
             </Button>
           </div>
 

@@ -1,4 +1,3 @@
-// src/components/columns.tsx
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
@@ -292,7 +291,7 @@ export type AbsensiAdminData = {
   waktu_keluar: string | null;
   checkin_status?: "tepat_waktu" | "telat";
   checkout_status?: "normal" | "lembur" | "setengah_hari";
-  laporan?: string | null; 
+  laporan?: string | null;
 };
 
 export const getColumnsAbsensiAdmin = (
@@ -425,17 +424,33 @@ export const getColumnsAbsensiAdmin = (
     header: "Laporan",
     cell: ({ row }) => {
       const laporan = row.original.laporan as string | null | undefined;
-      return laporan ? (
-        <button
-          onClick={() => onViewLaporan(laporan ?? null)}
-          className="text-blue-600 hover:text-blue-800"
-          title="Lihat Laporan Harian"
-          type="button"
-        >
-          <FileText size={18} />
-        </button>
-      ) : (
-        <span className="text-gray-400">-</span>
+      const userId =
+        (row.original as any).user_id ?? (row.original as any).id ?? null;
+      return (
+        <div className="flex items-center justify-center gap-3">
+          {laporan ? (
+            <button
+              onClick={() => onViewLaporan(laporan ?? null)}
+              className="text-blue-600 hover:text-blue-800"
+              title="Lihat Laporan Harian"
+              type="button"
+            >
+              <FileText size={18} />
+            </button>
+          ) : (
+            <span className="text-gray-400">-</span>
+          )}
+
+          {userId ? (
+            <a
+              href={`/api/absensi/export?userId=${userId}`}
+              className="text-blue-600 hover:text-blue-800"
+              title="Download Riwayat Absensi (CSV)"
+            >
+              <Download size={18} />
+            </a>
+          ) : null}
+        </div>
       );
     },
   },
@@ -637,6 +652,50 @@ export const getColumnsCuti = (
           title="Hapus Cuti"
           onClick={() => onDelete(row.original)}
           className="text-red-600 hover:text-red-800"
+        >
+          <Trash size={16} />
+        </button>
+      </div>
+    ),
+    enableSorting: false,
+  },
+];
+
+export interface DivisiRow {
+  id_divisi: number;
+  nama_divisi: string;
+  users?: any[];
+}
+
+export const columnsDivisi = (
+  handleEdit: (row: DivisiRow) => void,
+  handleDelete: (row: DivisiRow) => void
+): ColumnDef<DivisiRow>[] => [
+  {
+    accessorKey: "nama_divisi",
+    header: "Bagian",
+    meta: { width: "50%" },
+    cell: ({ row }) => row.original.nama_divisi ?? "-",
+  },
+  {
+    id: "actions",
+    header: "Aksi",
+    meta: { width: "50%" },
+    cell: ({ row }) => (
+      <div className="flex items-center justify-center gap-3">
+        <button
+          title="Edit"
+          className="text-blue-500 hover:text-blue-700"
+          onClick={() => handleEdit(row.original)}
+          type="button"
+        >
+          <Pen size={16} />
+        </button>
+        <button
+          title="Hapus"
+          className="text-red-500 hover:text-red-700"
+          onClick={() => handleDelete(row.original)}
+          type="button"
         >
           <Trash size={16} />
         </button>

@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
 
   const mapped = absensi.map((a) => ({
     id: a.id_absensi,
+    user_id: (a.user as any)?.id_user ?? (a.user as any)?.id ?? null,
     nama: a.user?.nama || "-",
     tanggal: a.tanggal,
     status: a.status,
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
     waktu_keluar: a.jam_checkout,
     checkin_status: a.checkin_status,
     checkout_status: a.checkout_status,
-    laporan: (a as any).laporan ?? null, 
+    laporan: (a as any).laporan_harian ?? (a as any).laporan ?? null,
   }));
 
   return NextResponse.json(mapped);

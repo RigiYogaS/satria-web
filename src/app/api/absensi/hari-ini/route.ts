@@ -59,8 +59,11 @@ export async function POST(req: Request) {
   }
   const userId = parseInt(session.user.id);
   const body = await req.json();
+  const { latitude, longitude, accuracy, ipAddress, clientIp, detected } = body;
 
-  const { latitude, longitude, accuracy, ipAddress } = body;
+  // resolve ip: prefer ipAddress, fallback ke clientIp atau pertama dari detected[]
+  const resolvedIp =
+    ipAddress ?? clientIp ?? (Array.isArray(detected) && detected[0]) ?? null;
 
   const now = new Date();
   const todayUTC = new Date(
@@ -93,12 +96,12 @@ export async function POST(req: Request) {
     data: {
       user_id: userId,
       waktu: now,
-      tanggal: todayUTC, 
+      tanggal: todayUTC,
       status: "Hadir",
       latitude,
       longitude,
       accuracy,
-      ip_address: ipAddress,
+      ip_address: resolvedIp, // <-- use resolvedIp
       checkin_status,
     },
   });

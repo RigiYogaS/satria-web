@@ -14,11 +14,18 @@ interface StatusAbsenProps {
   isCheckedOut?: boolean;
   absenData?: AbsenData | null;
   visible?: boolean;
+  wifiName?: string; // <-- tambahkan ini
 }
 
 const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
   (
-    { checkOutTime = "00.00 WIB", isCheckedOut = false, absenData, visible },
+    {
+      checkOutTime = "00.00 WIB",
+      isCheckedOut = false,
+      absenData,
+      visible,
+      wifiName,
+    },
     ref
   ) => {
     const [currentCheckOutTime, setCurrentCheckOutTime] =
@@ -28,7 +35,7 @@ const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
     const [checkoutLocationName, setCheckoutLocationName] =
       useState<string>("");
     const [locationName, setLocationName] = useState<string>("");
-    const [wifiName, setWifiName] = useState<string>("");
+    const [wifiNameState, setWifiNameState] = useState<string>("");
 
     useImperativeHandle(ref, () => ({
       triggerCheckIn: (data: AbsenData) => {
@@ -70,23 +77,58 @@ const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
       }
     }, [absenData?.latitude, absenData?.longitude]);
 
-    // Ambil nama wifi dari ipAddress via API eksternal
+    // Ambil nama wifi dari ipAddress via API eksternal — prioritaskan prop wifiName jika ada
     useEffect(() => {
-      if (absenData?.ipAddress) {
-        const fetchWifiName = async () => {
-          try {
-            const res = await fetch(`/api/ip-lokasi?ip=${absenData.ipAddress}`);
-            const data = await res.json();
-            setWifiName(data.nama_wifi || "");
-          } catch {
-            setWifiName("");
-          }
-        };
-        fetchWifiName();
-      } else {
-        setWifiName("");
+      // helper normalize IP
+      function normalizeIp(raw?: string | null): string | null {
+        if (!raw) return null;
+        let ip = String(raw).split(",")[0].trim(); // take first if comma separated
+        ip = ip.replace(/^::ffff:/i, ""); // remove IPv6 prefix
+        const m = ip.match(/([0-9]{1,3}(\.[0-9]{1,3}){3})/);
+        if (m) return m[1];
+        return ip || null;
       }
-    }, [absenData?.ipAddress]);
+
+      console.log(
+        "[StatusAbsen] prop wifiName:",
+        wifiName,
+        "absenData.ipAddress:",
+        absenData?.ipAddress
+      );
+      if (wifiName) {
+        setWifiNameState(wifiName);
+        return;
+      }
+
+      const normalized = normalizeIp(absenData?.ipAddress);
+      console.log("[StatusAbsen] normalized IP:", normalized);
+      if (!normalized) {
+        setWifiNameState("");
+        return;
+      }
+
+      const fetchWifiName = async () => {
+        try {
+          const res = await fetch(
+            `/api/ip-lokasi?ip=${encodeURIComponent(normalized)}`,
+            { cache: "no-store" }
+          );
+          console.log("[StatusAbsen] /api/ip-lokasi status:", res.status);
+          if (!res.ok) {
+            setWifiNameState("");
+            return;
+          }
+          const data = await res.json();
+          console.log("[StatusAbsen] /api/ip-lokasi response:", data);
+          setWifiNameState(data?.nama_wifi || data?.nama || "");
+        } catch (err) {
+          console.error("[StatusAbsen] fetch ip-lokasi error:", err);
+          setWifiNameState("");
+        }
+      };
+
+      fetchWifiName();
+    }, [wifiName, absenData?.ipAddress]);
 
     async function getRealLocationName(
       latitude: number,
@@ -99,7 +141,6 @@ const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
       return data.display_name || "Lokasi tidak tersedia";
     }
 
-    // Helper untuk ambil jam dan menit dari string "14.05.12" atau "14:05:12"
     const getHourMinute = (timeStr: string) => {
       if (!timeStr) return "--.--";
       const clean = timeStr.replace(/\./g, ":");
@@ -108,12 +149,22 @@ const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
       return `${hour.padStart(2, "0")}.${minute.padStart(2, "0")}`;
     };
 
+    type CheckinStatus = "tepat_waktu" | "telat";
+    type CheckoutStatus = "normal" | "lembur" | "setengah_hari";
+
+    function normalizeCheckinStatus(s?: string): CheckinStatus | undefined {
+      if (s === "tepat_waktu" || s === "telat") return s;
+      return undefined;
+    }
+
+    function normalizeCheckoutStatus(s?: string): CheckoutStatus | undefined {
+      if (s === "normal" || s === "lembur" || s === "setengah_hari") return s;
+      return undefined;
+    }
+
     if (!visible || !absenData) {
       return null;
     }
-
-    const currentIP = absenData?.ipAddress || "";
-    console.log("IP address dikirim ke backend:", currentIP);
 
     return (
       <LocationCard
@@ -121,10 +172,10 @@ const StatusAbsen = forwardRef<StatusAbsenHandle, StatusAbsenProps>(
         jamKeluar={absenData?.jamKeluar}
         lokasi={locationName}
         currentIP={absenData?.ipAddress}
-        wifiName={wifiName}
+        wifiName={wifiNameState}
         isCheckedOut={isCheckedOut}
-        checkinStatus={absenData?.checkinStatus} 
-        checkoutStatus={absenData?.checkoutStatus} 
+        checkinStatus={normalizeCheckinStatus(absenData?.checkinStatus)}
+        checkoutStatus={normalizeCheckoutStatus(absenData?.checkoutStatus)}
       />
     );
   }

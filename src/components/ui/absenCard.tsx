@@ -37,6 +37,7 @@ export default function AbsenCard({
   isCheckedIn = false,
   isCheckedOut = false,
   laporanComplete = false,
+  laporanRef,
   loading = false,
 }: AbsenCardProps) {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
@@ -61,6 +62,7 @@ export default function AbsenCard({
     wifiValidationLoading,
     allowedWifiList,
     connectedWifiName,
+    detectedList,
   } = useWifiValidation();
 
   const {
@@ -181,19 +183,49 @@ export default function AbsenCard({
 
     const checkinStatus = currentTime ? getCheckinStatus(currentTime) : "telat";
 
-    const absenData: AbsenData = {
-      jamDatang: currentTime ? currentTime.toISOString() : "",
-      jamKeluar: currentTime ? currentTime.toISOString() : "",
-      tanggal: currentTime ? currentTime.toISOString().slice(0, 10) : "",
-      lokasi: realLocationName,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      accuracy: location.accuracy,
-      ipAddress: currentIP || "",
-      checkinStatus,
+    // ensure values exist in scope before building payload
+    const tanggal = currentTime
+      ? currentTime.toISOString().slice(0, 10)
+      : new Date().toISOString().slice(0, 10);
+
+    const lokasi =
+      realLocationName ||
+      (location
+        ? `${location.latitude.toFixed(6)},${location.longitude.toFixed(6)}`
+        : "Lokasi tidak tersedia");
+
+    const latitude = location?.latitude ?? null;
+    const longitude = location?.longitude ?? null;
+    const accuracy =
+      typeof location?.accuracy === "number" ? location.accuracy : null;
+
+    const payload = {
+      type: "checkin",
+      tanggal,
+      lokasi,
+      latitude,
+      longitude,
+      accuracy,
+      detected: detectedList ?? [],
+      clientIp: currentIP ?? null,
+      ipAddress: currentIP ?? null,
     };
 
-    await onCheckIn?.(absenData);
+    const res = await fetch("/api/absensi", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      console.error("absensi error", json);
+      alert(json.error || JSON.stringify(json));
+      return;
+    }
+
+    window.location.reload();
   };
 
   const getCheckoutStatus = (
@@ -206,43 +238,77 @@ export default function AbsenCard({
   };
 
   const handleCheckOut = async (): Promise<void> => {
-    if (loading) return;
+    const tanggal = currentTime
+      ? currentTime.toISOString().slice(0, 10)
+      : new Date().toISOString().slice(0, 10);
 
-    if (!laporanComplete) {
-      setShowLaporanAlert(true);
+    const lokasi =
+      realLocationName ||
+      (location
+        ? `${location.latitude.toFixed(6)},${location.longitude.toFixed(6)}`
+        : "Lokasi tidak tersedia");
+
+    const latitude = location?.latitude ?? null;
+    const longitude = location?.longitude ?? null;
+    const accuracy =
+      typeof location?.accuracy === "number" ? location.accuracy : null;
+
+    // ambil laporan dari ref (jika ada)
+    const laporanText =
+      laporanRef &&
+      laporanRef.current &&
+      typeof laporanRef.current.getLaporan === "function"
+        ? laporanRef.current.getLaporan()
+        : null;
+
+    // jika laporan wajib namun kosong, tampilkan alert (opsional)
+    if (
+      cardState === "checkedIn" &&
+      !laporanText &&
+      laporanComplete === false
+    ) {
+      alert("Silakan isi laporan harian sebelum check-out.");
       return;
     }
 
-    if (!location) {
-      setAlertMessage("Lokasi belum tersedia. Pastikan GPS aktif.");
-      setShowLocationAlert(true);
-      return;
-    }
-
-    if (location.accuracy > 150) {
-      setAlertAccuracy(location.accuracy);
-      setPendingAction("checkout");
-      setShowAccuracyAlert(true);
-      return;
-    }
-
-    const checkoutStatus = currentTime
-      ? getCheckoutStatus(currentTime)
-      : "normal";
-
-    // Pastikan jamDatang selalu ada (walau kosong)
-    const absenData: AbsenData = {
-      jamDatang: "",
-      jamKeluar: currentTime ? currentTime.toISOString() : "",
-      tanggal: currentTime ? currentTime.toISOString().slice(0, 10) : "",
-      lokasi: realLocationName,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      accuracy: location.accuracy,
-      checkoutStatus,
+    const payload = {
+      type: "checkout",
+      tanggal,
+      lokasi,
+      latitude,
+      longitude,
+      accuracy,
+      detected: detectedList ?? [],
+      clientIp: currentIP ?? null,
+      ipAddress: currentIP ?? null,
+      laporanHarian: laporanText, // gunakan nama yang dipakai server
     };
 
-    await onCheckOut?.(absenData);
+    const res = await fetch("/api/absensi", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      console.error("absensi checkout error", json);
+      alert(json.error || JSON.stringify(json));
+      return;
+    }
+
+    // bersihkan laporan di UI setelah sukses (jika ref tersedia)
+    if (
+      laporanRef &&
+      laporanRef.current &&
+      typeof laporanRef.current.clearLaporan === "function"
+    ) {
+      laporanRef.current.clearLaporan();
+    }
+
+    // refresh status
+    window.location.reload();
   };
 
   const handleAccuracyConfirm = (): void => {
@@ -268,7 +334,6 @@ export default function AbsenCard({
 
   const cardState = getCardState();
 
-  // Memoized reverse geocoding
   const getRealLocationName = async (
     latitude: number,
     longitude: number
@@ -285,7 +350,6 @@ export default function AbsenCard({
 
       const data = await response.json();
 
-      // Extract meaningful location info
       const address = data.address || {};
       const locationParts = [];
 
@@ -487,10 +551,12 @@ export default function AbsenCard({
                   Lokasi: {getLocationName()}
                 </p>
                 <div>IP yang terdeteksi: {currentIP ?? "-"}</div>
-                {/* DEBUG: tampilkan semua IP yang dideteksi dan allowed */}
                 <div className="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-700">
                   <div>
-                    <b>DEBUG Detected IPs:</b> {currentIP ?? "-"}
+                    <b>DEBUG Detected IPs:</b>{" "}
+                    {detectedList && detectedList.length
+                      ? detectedList.join(", ")
+                      : currentIP ?? "-"}
                   </div>
                   <div>
                     <b>DEBUG Allowed IPs:</b>{" "}
